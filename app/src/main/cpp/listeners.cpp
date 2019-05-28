@@ -89,6 +89,7 @@ void RoyaleDataListener::onNewData(const royale::DepthData *data) {
     }
     jbyteArray encoded = env->NewByteArray(n * elementSize);
     env->SetByteArrayRegion(encoded, 0, n * elementSize, fillEncoded);
+    delete[] fillEncoded;
 
     auto royaleData = env->NewObject(jRoyaleDepthData, jRoyaleDepthData_init,
                                      (jint) data->version, // Int
