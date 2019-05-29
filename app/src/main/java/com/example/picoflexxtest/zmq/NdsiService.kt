@@ -13,6 +13,7 @@ import com.example.picoflexxtest.royale.RoyaleDepthData
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.github.luben.zstd.Zstd
 import org.zeromq.SocketType
 import org.zeromq.ZContext
 import org.zeromq.ZMQ
@@ -166,9 +167,14 @@ class NdsiService : IntentService("NdsiService") {
 
         val timeA = System.nanoTime()
 
+        val compressed = Zstd.compress(data.encoded, 1)
+
         val timeB = System.nanoTime()
-        Log.i(TAG, "Encoded in ${timeB- timeA} nanos, ${(timeB- timeA) / 1000} micros, ${(timeB- timeA) / 1000000} millis")
-        val rawData = data.encoded
+        Log.i(
+            TAG,
+            "Compressed in ${timeB - timeA} nanos, ${(timeB - timeA) / 1000} micros, ${(timeB - timeA) / 1000000} millis"
+        )
+        val rawData = compressed
 
         val buf = ByteBuffer.allocate(8 * 4)
         buf.order(ByteOrder.LITTLE_ENDIAN)
