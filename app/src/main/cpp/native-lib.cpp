@@ -29,6 +29,11 @@
 
 JavaVM *javaVM = nullptr;
 
+jclass jArrayList;
+jmethodID jArrayList_init;
+jmethodID jArrayList_add;
+jmethodID jArrayList_size;
+
 jclass jRoyaleDepthData;
 jmethodID jRoyaleDepthData_init;
 jclass jDataListener;
@@ -61,6 +66,11 @@ namespace {
             LOGE ("can not cache the java native interface environment");
             return -1;
         }
+
+        FindJavaClass(jArrayList, "java/util/ArrayList");
+        FindJavaMethod(jArrayList_init, jArrayList, "<init>", "(I)V");
+        FindJavaMethod(jArrayList_add, jArrayList, "add", "(Ljava/lang/Object;)Z");
+        FindJavaMethod(jArrayList_size, jArrayList, "size", "()I");
 
         FindJavaClass(jRoyaleDepthData, "com/example/picoflexxtest/royale/RoyaleDepthData");
         FindJavaMethod(jRoyaleDepthData_init, jRoyaleDepthData, "<init>", "(IJIII[I[[F[F[I[I[B)V");

@@ -6,6 +6,11 @@
 
 extern JavaVM *javaVM;
 
+extern jclass jArrayList;
+extern jmethodID jArrayList_init;
+extern jmethodID jArrayList_add;
+extern jmethodID jArrayList_size;
+
 extern jclass jRoyaleDepthData;
 extern jmethodID jRoyaleDepthData_init;
 extern jclass jDataListener;
@@ -47,6 +52,8 @@ extern jmethodID jIrListener_onIrData;
     }                                                                                                      \
     LOGI ("got field=[" #name "] with signature=[" #signature "] from class=[" #class "]");                \
 }
+
+size_t GetArrayListSize(JNIEnv *env, jobject instance, jfieldID field);
 
 #define ThrowException(exceptionClass, message) \
     (env->ThrowNew(exceptionClass, message))
