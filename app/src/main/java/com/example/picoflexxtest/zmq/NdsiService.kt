@@ -198,7 +198,7 @@ class NdsiService : IntentService("NdsiService") {
         publicEndpoint: String,
         socket: KMutableProperty0<ZMQ.Socket>,
         address: KMutableProperty0<String>,
-        setHwm: Int? = 45 * 1 // 1 minute at max frame rate
+        setHwm: Int? = 50 // 10 seconds at min frame rate
     ) {
         val zSock = zContext.createSocket(type)
         if (setHwm != null) {
