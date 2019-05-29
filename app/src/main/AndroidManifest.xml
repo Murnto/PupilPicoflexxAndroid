@@ -44,7 +44,10 @@
                 <!--<category android:name="android.intent.category.LAUNCHER" />-->
             <!--</intent-filter>-->
         </activity>
-        <service android:name=".zmq.NdsiService" />
+        <service
+            android:exported="false"
+            android:enabled="true"
+            android:name=".zmq.NdsiService" />
     </application>
 
 </manifest>
