@@ -61,7 +61,7 @@ void RoyaleCameraDevice::onNewData(const royale::IRImage *data) {
 #define GET_BYTE(x, y) (*((uint8_t *) (((char*) &(x)) + (y))))
 #define DO_FILL_ENCODED(fillEncoded, elementSize, i, pt) \
 {                                                                                         \
-    (fillEncoded)[(i) * (elementSize) + 0] = (jbyte) (((pt).grayValue >> 3) & 0xFF);      \
+    (fillEncoded)[(i) * (elementSize) + 0] = (jbyte) (((pt).grayValue >> 4) & 0xFF);      \
                                                                                           \
     (fillEncoded)[(i) * (elementSize) + 1 + 0] = (jbyte) GET_BYTE((pt).x, 0);             \
     (fillEncoded)[(i) * (elementSize) + 1 + 1] = (jbyte) GET_BYTE((pt).x, 1);             \
