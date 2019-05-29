@@ -209,7 +209,7 @@ namespace {
     }
 
     JNIEXPORT void JNICALL
-    Java_com_example_picoflexxtest_royale_RoyaleCamera__1_unregisterDataListener(
+    Java_com_example_picoflexxtest_royale_RoyaleCamera__1_1unregisterDataListener(
             JNIEnv *env,
             jobject instance,
             jlong pDataListener
