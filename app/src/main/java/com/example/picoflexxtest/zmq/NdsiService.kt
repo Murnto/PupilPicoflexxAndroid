@@ -130,38 +130,6 @@ class NdsiService : IntentService("NdsiService") {
         }
     }
 
-    @Deprecated("")
-    private fun oldPublishFrame() {
-        val irData = irQueue.take()
-//        val rawData = irData.map { it.toByte() }.toByteArray()
-//        val fooData = ByteBuffer.allocate(irData.size * (1 + 4*4 + 1))
-        val rawData = ByteArray(irData.size * (1 + 4 * 4 + 1))
-
-        (0 until 1 + 4 + 4 + 1).forEach { i ->
-            (0 until irData.size).forEach { j ->
-                rawData[i * irData.size + j] = irData[j].toByte()
-            }
-        }
-//        val zeroArray = irData.map { it.toByte() }.toByteArray()
-//        val rawData = fooData.array()
-
-        val buf = ByteBuffer.allocate(8 * 4)
-        buf.order(ByteOrder.LITTLE_ENDIAN)
-        buf.putInt(FLAG_ALL) // Flags
-        buf.putInt(224) // Width
-        buf.putInt(171) // Height
-        buf.putInt(0) // Index
-        buf.putDouble(System.currentTimeMillis() / 1000.0) // Now
-        buf.putInt(rawData.size) // Data length
-        buf.putInt(0) // Lower
-
-        this.data.sendMultiPart(
-            this.network.uuid().toByteArray(),
-            buf.array(),
-            rawData
-        )
-    }
-
     private fun publishFrame() {
         val data = dataQueue.take()
 
