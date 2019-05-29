@@ -8,8 +8,7 @@ import com.example.picoflexxtest.*
 import com.example.picoflexxtest.ndsi.FLAG_ALL
 import com.example.picoflexxtest.ndsi.SensorAttach
 import com.example.picoflexxtest.ndsi.SensorDetach
-import com.example.picoflexxtest.royale.RoyaleCamera
-import com.example.picoflexxtest.royale.RoyaleDepthData
+import com.example.picoflexxtest.royale.RoyaleCameraDevice
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -42,8 +41,7 @@ class NdsiService : IntentService("NdsiService") {
     private lateinit var cmdUrl: String
     private var connected: Boolean = false
     private val irQueue = ArrayBlockingQueue<IntArray>(1)
-    private val dataQueue = ArrayBlockingQueue<RoyaleDepthData>(1)
-
+    private val dataQueue = ArrayBlockingQueue<ByteArray>(1)
 
     override fun onHandleIntent(intent: Intent) {
         Log.d("NDSI wtf", "hello")
@@ -62,7 +60,7 @@ class NdsiService : IntentService("NdsiService") {
 
     fun connect(context: Context) {
         this.fooCtx = context
-        RoyaleCamera.openCamera(fooCtx) {
+        RoyaleCameraDevice.openCamera(fooCtx) {
             Log.i(TAG, "openCamera returned $it")
 
 //            it?.registerIrListener {
@@ -73,12 +71,21 @@ class NdsiService : IntentService("NdsiService") {
 //                }
 //            }
 
-            it?.registerDataListener {
+            Log.i(TAG, "Camera getUseCases: ${it?.getUseCases()}")
+            Log.i(TAG, "Camera getCameraName: ${it?.getCameraName()}")
+            Log.i(TAG, "Camera getCameraId: ${it?.getCameraId()}")
+            Log.i(TAG, "Camera getMaxSensorWidth: ${it?.getMaxSensorWidth()}")
+            Log.i(TAG, "Camera getMaxSensorHeight: ${it?.getMaxSensorHeight()}")
+            it?.startCapture()
+            it?.addEncodedDepthDataCallback {
                 try {
                     dataQueue.add(it)
                 } catch (e: IllegalStateException) {
                     e.printStackTrace()
                 }
+            }
+            it?.addExposureTimeCallback {
+                println("Exposure times: ${it.contentToString()}")
             }
 
             startServiceLoop()
@@ -134,15 +141,12 @@ class NdsiService : IntentService("NdsiService") {
         val data = dataQueue.take()
 
         val timeA = System.nanoTime()
-
-        val compressed = Zstd.compress(data.encoded, 1)
-
+        val compressed = Zstd.compress(data, 1)
         val timeB = System.nanoTime()
         Log.i(
             TAG,
             "Compressed in ${timeB - timeA} nanos, ${(timeB - timeA) / 1000} micros, ${(timeB - timeA) / 1000000} millis"
         )
-        val rawData = compressed
 
         val buf = ByteBuffer.allocate(8 * 4)
         buf.order(ByteOrder.LITTLE_ENDIAN)
@@ -151,7 +155,7 @@ class NdsiService : IntentService("NdsiService") {
         buf.putInt(171) // Height
         buf.putInt(0) // Index
         buf.putDouble(System.currentTimeMillis() / 1000.0) // Now
-        buf.putInt(rawData.size) // Data length
+        buf.putInt(compressed.size) // Data length
         buf.putInt(0) // Lower
 
         val bufArray = buf.array()
@@ -161,7 +165,7 @@ class NdsiService : IntentService("NdsiService") {
         this.data.sendMultiPart(
             this.network.uuid().toByteArray(),
             bufArray,
-            rawData
+            compressed
         )
     }
 

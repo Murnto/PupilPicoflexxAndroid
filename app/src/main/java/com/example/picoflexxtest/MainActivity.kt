@@ -1,17 +1,13 @@
 package com.example.picoflexxtest
 
+import android.hardware.usb.UsbDevice
+import android.hardware.usb.UsbManager
 import android.os.Bundle
 import android.support.design.widget.Snackbar
-import android.support.v7.app.AppCompatActivity;
-
-import kotlinx.android.synthetic.main.activity_main2.*
-import android.hardware.usb.UsbDevice.getDeviceName
-import android.hardware.usb.UsbManager
-import android.hardware.usb.UsbDevice
-import android.content.Intent
+import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import com.example.picoflexxtest.zmq.NdsiService
-import org.jetbrains.anko.startService
+import kotlinx.android.synthetic.main.activity_main2.*
 
 
 class MainActivity : AppCompatActivity() {

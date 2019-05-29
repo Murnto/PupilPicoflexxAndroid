@@ -10,8 +10,7 @@ data class RoyaleDepthData(
     val pointCloud: Array<FloatArray>,  // [width * height][3]
     val noise: FloatArray,  // [width * height]
     val confidence: IntArray,  // [width * height]
-    val grayValue: IntArray,  // [width * height]
-    val encoded: ByteArray
+    val grayValue: IntArray  // [width * height]
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -29,7 +28,6 @@ data class RoyaleDepthData(
         if (!noise.contentEquals(other.noise)) return false
         if (!confidence.contentEquals(other.confidence)) return false
         if (!grayValue.contentEquals(other.grayValue)) return false
-        if (!encoded.contentEquals(other.encoded)) return false
 
         return true
     }
@@ -45,7 +43,6 @@ data class RoyaleDepthData(
         result = 31 * result + noise.contentHashCode()
         result = 31 * result + confidence.contentHashCode()
         result = 31 * result + grayValue.contentHashCode()
-        result = 31 * result + encoded.contentHashCode()
         return result
     }
 }

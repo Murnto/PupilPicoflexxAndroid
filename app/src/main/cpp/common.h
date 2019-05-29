@@ -13,13 +13,8 @@ extern jmethodID jArrayList_size;
 
 extern jclass jRoyaleDepthData;
 extern jmethodID jRoyaleDepthData_init;
-extern jclass jDataListener;
-extern jmethodID jDataListener_onData;
 
 extern jclass jFloatArray;
-
-extern jclass jIrListener;
-extern jmethodID jIrListener_onIrData;
 
 #define FindJavaClass(dest, name)                                   \
 {                                                                   \
