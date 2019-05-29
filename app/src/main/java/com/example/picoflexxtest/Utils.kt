@@ -43,7 +43,9 @@ fun Zyre.shoutJson(group: String, obj: SensorMessage) {
 }
 
 fun Zyre.whisperJson(peer: String, obj: SensorMessage) {
-    this.whispers(peer, mapper.writeValueAsString(obj))
+    this.whispers(peer, mapper.writeValueAsString(obj).also {
+        Log.d("Zyre.whisperJson($peer)", it)
+    })
 }
 
 fun Zyre.recentEvents() = sequence {
