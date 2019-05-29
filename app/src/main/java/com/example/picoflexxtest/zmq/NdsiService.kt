@@ -23,7 +23,7 @@ import java.util.concurrent.ArrayBlockingQueue
 import kotlin.reflect.KMutableProperty0
 
 
-private const val GROUP = "pupil-mobile-v3"
+private const val GROUP = "pupil-picoflexx-v1"
 val mapper = jacksonObjectMapper().also {
     it.propertyNamingStrategy = PropertyNamingStrategy.SNAKE_CASE
     it.setSerializationInclusion(JsonInclude.Include.ALWAYS)
