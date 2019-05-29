@@ -165,24 +165,10 @@ class NdsiService : IntentService("NdsiService") {
         val data = dataQueue.take()
 
         val timeA = System.nanoTime()
-        val fooData = ByteBuffer.allocate(data.width * data.height * (1 + 4 * 4 + 1))
-        fooData.order(ByteOrder.LITTLE_ENDIAN)
-
-        var i = 0
-        while (i < data.width * data.height) {
-            fooData.put((data.grayValue[i] shr 4).toByte())
-            fooData.putFloat(data.pointCloud[i][0])
-            fooData.putFloat(data.pointCloud[i][1])
-            fooData.putFloat(data.pointCloud[i][2])
-            fooData.putFloat(data.noise[i])
-            fooData.put(data.confidence[i].toByte())
-
-            i += 1
-        }
 
         val timeB = System.nanoTime()
         Log.i(TAG, "Encoded in ${timeB- timeA} nanos, ${(timeB- timeA) / 1000} micros, ${(timeB- timeA) / 1000000} millis")
-        val rawData = fooData.array()
+        val rawData = data.encoded
 
         val buf = ByteBuffer.allocate(8 * 4)
         buf.order(ByteOrder.LITTLE_ENDIAN)
