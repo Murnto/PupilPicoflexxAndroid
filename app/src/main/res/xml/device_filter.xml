@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <resources>
-    <usb-device vendor-id="1C28" />
-    <usb-device vendor-id="058B" />
-    <usb-device vendor-id="1f46" />
+    <usb-device vendor-id="0x00001C28" />
+    <usb-device vendor-id="0x0000058B" />
+    <usb-device vendor-id="0x00001f46" />
 </resources>
