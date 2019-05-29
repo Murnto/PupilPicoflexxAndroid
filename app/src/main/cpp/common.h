@@ -38,4 +38,17 @@ extern jmethodID jIrListener_onIrData;
     LOGI ("got method=[" #name "] with signature=[" #signature "] from class=[" #class "]");                \
 }
 
+#define FindJavaField(dest, class, name, signature)                                                        \
+{                                                                                                          \
+    dest = env->GetFieldID(class, name, signature);                                                        \
+    if (env->ExceptionCheck()) {                                                                           \
+        LOGE ("can not get field=[" #name "] with signature=[" #signature "] from class=[" #class "]");    \
+        return -1;                                                                                         \
+    }                                                                                                      \
+    LOGI ("got field=[" #name "] with signature=[" #signature "] from class=[" #class "]");                \
+}
+
+#define ThrowException(exceptionClass, message) \
+    (env->ThrowNew(exceptionClass, message))
+
 #endif //PICOFLEXXTEST_COMMON_H
