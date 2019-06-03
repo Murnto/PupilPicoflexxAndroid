@@ -1,6 +1,9 @@
 package com.example.picoflexxtest
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
+import android.content.Context.NOTIFICATION_SERVICE
 import android.content.Context.WIFI_SERVICE
 import android.net.wifi.WifiManager
 import android.util.Log
@@ -13,7 +16,10 @@ import java.math.BigInteger
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.nio.ByteOrder
-import java.util.ArrayList
+import java.util.*
+
+
+val FOREGROUND_NDSI_SERVICE = "FOREGROUND_NDSI_SERVICE"
 
 
 fun getWifiIpAddress(context: Context): String? {
@@ -96,4 +102,18 @@ fun ZMQ.Socket.sendMultiPart(vararg data: Any) {
     }
 
     Log.i("ZMQ.Socket.sendMultiPart", "Sent multipart: ${data.toList()}")
+}
+
+fun Context.setupNotificationChannels() {
+    // Create the NotificationChannel
+    val name = getString(R.string.channel_name)
+    val descriptionText = getString(R.string.channel_description)
+    val importance = NotificationManager.IMPORTANCE_LOW
+    val mChannel = NotificationChannel(FOREGROUND_NDSI_SERVICE, name, importance)
+    mChannel.description = descriptionText
+
+    // Register the channel with the system; you can't change the importance
+    // or other notification behaviors after this
+    val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+    notificationManager.createNotificationChannel(mChannel)
 }

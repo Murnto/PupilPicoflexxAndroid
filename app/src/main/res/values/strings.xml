@@ -3,4 +3,9 @@
     <string name="start">Start</string>
     <string name="royale_image_description">the data received from royale</string>
     <string name="title_activity_main">MainActivity</string>
+    <string name="notification_title">Notificaiton Title</string>
+    <string name="notification_message">Notification Message</string>
+    <string name="ticker_text">Ticker Text</string>
+    <string name="channel_name">NDSI</string>
+    <string name="channel_description">Foreground service for NDSI</string>
 </resources>

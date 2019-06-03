@@ -1,8 +1,6 @@
 package com.example.picoflexxtest.zmq
 
-import android.app.IntentService
 import android.content.Context
-import android.content.Intent
 import android.util.Log
 import com.example.picoflexxtest.*
 import com.example.picoflexxtest.ndsi.FLAG_ALL
@@ -29,8 +27,10 @@ val mapper = jacksonObjectMapper().also {
     it.setSerializationInclusion(JsonInclude.Include.ALWAYS)
 }
 
-class NdsiService : IntentService("NdsiService") {
-    private val TAG = NdsiService::class.java.simpleName
+class NdsiManager(
+    private val service: NdsiService
+) {
+    private val TAG = NdsiManager::class.java.simpleName
     private val zContext = ZContext()
     private lateinit var network: Zyre
     private lateinit var data: ZMQ.Socket
@@ -43,56 +43,41 @@ class NdsiService : IntentService("NdsiService") {
     private val irQueue = ArrayBlockingQueue<IntArray>(1)
     private val dataQueue = ArrayBlockingQueue<ByteArray>(1)
 
-    override fun onHandleIntent(intent: Intent) {
-        Log.d("NDSI wtf", "hello")
-        Log.i(TAG, "$intent")
-        Log.i(TAG, "${intent.action}")
-        Log.i(TAG, "${intent.type}")
-        Log.i(TAG, "${intent.data}")
-        Log.i(TAG, "${intent.getStringExtra("type")}")
+    fun connect() {
+        Log.d(TAG, "hello")
 
         if (!connected) {
-            connect(this)
+            Thread {
+                connect(service)
+            }.start()
         }
     }
 
     private lateinit var fooCtx: Context
 
-    fun connect(context: Context) {
+    private fun connect(context: Context) {
         this.fooCtx = context
-        if (true) {
-            startServiceLoop()
-        } else {
-            RoyaleCameraDevice.openCamera(fooCtx) {
-                Log.i(TAG, "openCamera returned $it")
+        RoyaleCameraDevice.openCamera(fooCtx) {
+            Log.i(TAG, "openCamera returned $it")
 
-//            it?.registerIrListener {
-//                try {
-//                    irQueue.add(it)
-//                } catch (e: IllegalStateException) {
-//                    e.printStackTrace()
-//                }
-//            }
-
-                Log.i(TAG, "Camera getUseCases: ${it?.getUseCases()}")
-                Log.i(TAG, "Camera getCameraName: ${it?.getCameraName()}")
-                Log.i(TAG, "Camera getCameraId: ${it?.getCameraId()}")
-                Log.i(TAG, "Camera getMaxSensorWidth: ${it?.getMaxSensorWidth()}")
-                Log.i(TAG, "Camera getMaxSensorHeight: ${it?.getMaxSensorHeight()}")
-                it?.startCapture()
-                it?.addEncodedDepthDataCallback {
-                    try {
-                        dataQueue.add(it)
-                    } catch (e: IllegalStateException) {
-                        e.printStackTrace()
-                    }
+            Log.i(TAG, "Camera getUseCases: ${it?.getUseCases()}")
+            Log.i(TAG, "Camera getCameraName: ${it?.getCameraName()}")
+            Log.i(TAG, "Camera getCameraId: ${it?.getCameraId()}")
+            Log.i(TAG, "Camera getMaxSensorWidth: ${it?.getMaxSensorWidth()}")
+            Log.i(TAG, "Camera getMaxSensorHeight: ${it?.getMaxSensorHeight()}")
+            it?.startCapture()
+            it?.addEncodedDepthDataCallback {
+                try {
+                    dataQueue.add(it)
+                } catch (e: IllegalStateException) {
+                    e.printStackTrace()
                 }
-                it?.addExposureTimeCallback {
-                    println("Exposure times: ${it.contentToString()}")
-                }
-
-                startServiceLoop()
             }
+            it?.addExposureTimeCallback {
+                println("Exposure times: ${it.contentToString()}")
+            }
+
+            startServiceLoop()
         }
     }
 
@@ -151,7 +136,7 @@ class NdsiService : IntentService("NdsiService") {
         val timeB = System.nanoTime()
         Log.i(
             TAG,
-            "Compressed in ${timeB - timeA} nanos, ${(timeB - timeA) / 1000} micros, ${(timeB - timeA) / 1000000} millis"
+            "Compressed in ${(timeB - timeA) / 1000} micros, ${(timeB - timeA) / 1000000} millis"
         )
 
         val buf = ByteBuffer.allocate(8 * 4)
@@ -177,6 +162,7 @@ class NdsiService : IntentService("NdsiService") {
 
     private fun pollNetwork() {
         this.network.recentEvents().forEach {
+            Log.d(TAG, "type=${it.type()}, group=${it.group()}, peer=${it.peerName()}|${it.peerUuid()}")
             if (it.type() == "JOIN" && it.group() == GROUP) {
                 network.whisperJson(it.peerUuid(), this.sensorAttachJson())
             }
