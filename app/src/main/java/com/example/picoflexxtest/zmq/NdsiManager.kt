@@ -69,7 +69,7 @@ class NdsiManager(
     private fun addSensor(sensor: NdsiSensor) {
         Log.i(TAG, "Adding sensor $sensor")
 
-        val existing = this.sensors[sensor.sensorId]
+        val existing = this.sensors[sensor.sensorUuid]
         if (existing != null) {
             if (existing == sensor) {
                 return
@@ -78,7 +78,7 @@ class NdsiManager(
             this.removeSensor(existing)
         }
 
-        this.sensors[sensor.sensorId] = sensor
+        this.sensors[sensor.sensorUuid] = sensor
         this.notifySensorsAttached()
     }
 
@@ -86,7 +86,7 @@ class NdsiManager(
         Log.i(TAG, "Removing sensor $sensor")
 
         sensor.unlink()
-        this.sensors.remove(sensor.sensorId)
+        this.sensors.remove(sensor.sensorUuid)
         this.notifySensorDetached(sensor)
     }
 
@@ -153,11 +153,11 @@ class NdsiManager(
         }
 
     private fun notifySensorDetached(sensor: NdsiSensor) =
-        this.network.shoutJson(GROUP, SensorDetach(sensor.sensorId))
+        this.network.shoutJson(GROUP, SensorDetach(sensor.sensorUuid))
 
     private fun notifyAllSensorsDetached() =
         this.sensors.values.forEach {
-            this.network.shoutJson(GROUP, SensorDetach(it.sensorId))
+            this.network.shoutJson(GROUP, SensorDetach(it.sensorUuid))
         }
 
     fun bind(

@@ -12,7 +12,7 @@ class PicoflexxSensor(
     private val camera: RoyaleCameraDevice
 ) : NdsiSensor(
     "royale_full",
-    camera.getCameraId(),
+    UUID.nameUUIDFromBytes(camera.getCameraId().toByteArray()).toString(),
     manager
 ) {
     private val TAG = PicoflexxSensor::class.java.simpleName

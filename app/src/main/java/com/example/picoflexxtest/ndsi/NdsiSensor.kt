@@ -12,8 +12,8 @@ import zmq.msg.MsgAllocator
 import java.nio.ByteBuffer
 
 abstract class NdsiSensor(
-    protected val sensorType: String,
-    val sensorId: String,
+    val sensorType: String,
+    val sensorUuid: String,
     protected val manager: NdsiManager
 ) {
     private val TAG = NdsiSensor::class.java.simpleName
@@ -58,7 +58,7 @@ abstract class NdsiSensor(
         header.dataLength = data.size
 
         this.data.sendMultiPart(
-            this.manager.network.uuid().toByteArray(),
+            this.sensorUuid.toByteArray(),
             header.encode(),
             data
         )
@@ -86,8 +86,8 @@ abstract class NdsiSensor(
 
     open fun sensorAttachJson() = SensorAttach(
         "sensorName",
-        this.manager.network.uuid(),
-        sensorType,
+        this.sensorUuid,
+        this.sensorType,
         this.noteUrl,
         this.cmdUrl,
         this.dataUrl
