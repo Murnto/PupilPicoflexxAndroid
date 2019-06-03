@@ -62,6 +62,7 @@ class NdsiService : Service() {
 
         if (this.manager == null) {
             this.manager = NdsiManager(this)
+            this.manager!!.start()
         }
         this.manager!!.connect()
 

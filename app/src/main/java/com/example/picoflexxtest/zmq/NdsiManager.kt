@@ -2,22 +2,22 @@ package com.example.picoflexxtest.zmq
 
 import android.content.Context
 import android.util.Log
-import com.example.picoflexxtest.*
-import com.example.picoflexxtest.ndsi.FLAG_ALL
-import com.example.picoflexxtest.ndsi.SensorAttach
+import com.example.picoflexxtest.ndsi.NdsiSensor
+import com.example.picoflexxtest.ndsi.PicoflexxSensor
 import com.example.picoflexxtest.ndsi.SensorDetach
+import com.example.picoflexxtest.recentEvents
 import com.example.picoflexxtest.royale.RoyaleCameraDevice
+import com.example.picoflexxtest.shoutJson
+import com.example.picoflexxtest.whisperJson
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.github.luben.zstd.Zstd
 import org.zeromq.SocketType
 import org.zeromq.ZContext
 import org.zeromq.ZMQ
 import org.zeromq.zyre.Zyre
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
-import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlin.reflect.KMutableProperty0
 
 
@@ -28,20 +28,20 @@ val mapper = jacksonObjectMapper().also {
 }
 
 class NdsiManager(
-    private val service: NdsiService
+    val service: NdsiService
 ) {
     private val TAG = NdsiManager::class.java.simpleName
     private val zContext = ZContext()
-    private lateinit var network: Zyre
-    private lateinit var data: ZMQ.Socket
-    private lateinit var dataUrl: String
-    private lateinit var note: ZMQ.Socket
-    private lateinit var noteUrl: String
-    private lateinit var cmd: ZMQ.Socket
-    private lateinit var cmdUrl: String
+    lateinit var network: Zyre
     private var connected: Boolean = false
-    private val irQueue = ArrayBlockingQueue<IntArray>(1)
-    private val dataQueue = ArrayBlockingQueue<ByteArray>(1)
+    private val sensors: MutableMap<String, NdsiSensor> = hashMapOf()
+    private val periodicShouter = Executors.newSingleThreadScheduledExecutor()
+
+    fun start() {
+        Thread {
+            startServiceLoop()
+        }.start()
+    }
 
     fun connect() {
         Log.d(TAG, "hello")
@@ -57,53 +57,54 @@ class NdsiManager(
 
     private fun connect(context: Context) {
         this.fooCtx = context
-        RoyaleCameraDevice.openCamera(fooCtx) {
+        RoyaleCameraDevice.openCamera(context) {
             Log.i(TAG, "openCamera returned $it")
 
-            Log.i(TAG, "Camera getUseCases: ${it?.getUseCases()}")
-            Log.i(TAG, "Camera getCameraName: ${it?.getCameraName()}")
-            Log.i(TAG, "Camera getCameraId: ${it?.getCameraId()}")
-            Log.i(TAG, "Camera getMaxSensorWidth: ${it?.getMaxSensorWidth()}")
-            Log.i(TAG, "Camera getMaxSensorHeight: ${it?.getMaxSensorHeight()}")
-            it?.startCapture()
-            it?.addEncodedDepthDataCallback {
-                try {
-                    dataQueue.add(it)
-                } catch (e: IllegalStateException) {
-                    e.printStackTrace()
-                }
+            if (it != null) {
+                this.addSensor(PicoflexxSensor(this, it))
             }
-            it?.addExposureTimeCallback {
-                // TODO
-            }
-
-            startServiceLoop()
         }
     }
 
+    private fun addSensor(sensor: NdsiSensor) {
+        Log.i(TAG, "Adding sensor $sensor")
+
+        val existing = this.sensors[sensor.sensorId]
+        if (existing != null) {
+            if (existing == sensor) {
+                return
+            }
+
+            this.removeSensor(existing)
+        }
+
+        this.sensors[sensor.sensorId] = sensor
+        this.notifySensorsAttached()
+    }
+
+    private fun removeSensor(sensor: NdsiSensor) {
+        Log.i(TAG, "Removing sensor $sensor")
+
+        sensor.unlink()
+        this.sensors.remove(sensor.sensorId)
+        this.notifySensorDetached(sensor)
+    }
+
     private fun startServiceLoop() {
-        network = Zyre("test-hostname")
-        network.join(GROUP)
-//        network.setInterface("swlan0")
-//        network.setEndpoint("192.168.43.1")
-        network.setVerbose()
-        network.start()
-        network.socket().join(GROUP)
+        this.network = Zyre("test-hostname")
+        this.network.join(GROUP)
+//        this.network.setInterface("swlan0")
+//        this.network.setEndpoint("192.168.43.1")
+        this.network.setVerbose()
+        this.network.start()
+        this.network.socket().join(GROUP)
 
-        Log.d(TAG, "Bridging under ${network.name()}")
+        Log.d(TAG, "Bridging under ${this.network.name()}")
 
-//        val publicEndpoint = network.socket().endpoint()
+//        val publicEndpoint = this.network.socket().endpoint()
         Thread.sleep(1000)
-        network.print()
+        this.network.print()
 //        val publicEndpoint = ZyreShim.getZyreEndpoint(network)
-        val publicEndpoint = getWifiIpAddress(fooCtx)!! // FIXME
-//        val publicEndpoint = "tcp://192.168.43.1"
-        val genericUrl = "tcp://*:*"
-        Log.i(TAG, "publicEndpoint=$publicEndpoint")
-
-        this.bind(SocketType.PUB, genericUrl, publicEndpoint, this::data, this::dataUrl)
-        this.bind(SocketType.PUB, genericUrl, publicEndpoint, this::note, this::noteUrl)
-        this.bind(SocketType.PULL, genericUrl, publicEndpoint, this::cmd, this::cmdUrl)
 
         connected = true // FIXME race condition
 
@@ -113,69 +114,53 @@ class NdsiManager(
     fun loop() {
         Log.d(TAG, "Entering bridging loop...")
 
-        this.network.shoutJson(GROUP, this.sensorAttachJson())
+        this.periodicShouter.scheduleAtFixedRate({
+            this.notifySensorsAttached()
+        }, 0, 10, TimeUnit.SECONDS)
 
         try {
             while (true) {
                 this.pollNetwork()
-                this.pollCmdSocket()
-                this.publishFrame()
+
+                // FIXME this won't perform well if we ever use multiple sensors
+                sensors.values.forEach {
+                    it.pollCmdSocket()
+                    it.publishFrame()
+                }
             }
         } finally {
             Log.d(TAG, "Leaving bridging loop...")
-            this.network.shoutJson(GROUP, SensorDetach(this.network.uuid()))
+            this.notifyAllSensorsDetached()
         }
-    }
-
-    private fun publishFrame() {
-        val data = dataQueue.take()
-
-        val compressed = timeExec(TAG, "Compressing frame data") {
-            Zstd.compress(data, 1)
-        }
-
-        val buf = ByteBuffer.allocate(8 * 4)
-        buf.order(ByteOrder.LITTLE_ENDIAN)
-        buf.putInt(FLAG_ALL) // Flags
-        buf.putInt(224) // Width
-        buf.putInt(171) // Height
-        buf.putInt(0) // Index
-        buf.putDouble(System.currentTimeMillis() / 1000.0) // Now
-        buf.putInt(compressed.size) // Data length
-        buf.putInt(0) // Lower
-
-        this.data.sendMultiPart(
-            this.network.uuid().toByteArray(),
-            buf.array(),
-            compressed
-        )
     }
 
     private fun pollNetwork() {
         this.network.recentEvents().forEach {
             Log.d(TAG, "type=${it.type()}, group=${it.group()}, peer=${it.peerName()}|${it.peerUuid()}")
             if (it.type() == "JOIN" && it.group() == GROUP) {
-                network.whisperJson(it.peerUuid(), this.sensorAttachJson())
+                this.notifySensorsAttached(it.peerUuid())
             }
         }
     }
 
-    private fun pollCmdSocket() {
-        this.cmd.recentEvents().forEach {
-            Log.d(TAG, "cmdSocket recent event = $it")
+    private fun notifySensorsAttached(peerUuid: String? = null) =
+        sensors.forEach { (k, v) ->
+            if (peerUuid == null) {
+                network.shoutJson(GROUP, v.sensorAttachJson())
+            } else {
+                network.whisperJson(peerUuid, v.sensorAttachJson())
+            }
         }
-    }
 
-    private fun sensorAttachJson() = SensorAttach(
-        "sensorName",
-        this.network.uuid(),
-        "royale_full",
-        this.noteUrl,
-        this.cmdUrl,
-        this.dataUrl
-    )
+    private fun notifySensorDetached(sensor: NdsiSensor) =
+        this.network.shoutJson(GROUP, SensorDetach(sensor.sensorId))
 
-    private fun bind(
+    private fun notifyAllSensorsDetached() =
+        this.sensors.values.forEach {
+            this.network.shoutJson(GROUP, SensorDetach(it.sensorId))
+        }
+
+    fun bind(
         type: SocketType,
         bindUrl: String,
         publicEndpoint: String,
