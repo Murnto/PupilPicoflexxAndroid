@@ -5,11 +5,24 @@ import com.example.picoflexxtest.getWifiIpAddress
 import com.example.picoflexxtest.recentEvents
 import com.example.picoflexxtest.sendMultiPart
 import com.example.picoflexxtest.zmq.NdsiManager
+import com.example.picoflexxtest.zmq.mapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import org.zeromq.SocketType
 import org.zeromq.ZMQ
 import zmq.Msg
 import zmq.msg.MsgAllocator
 import java.nio.ByteBuffer
+import kotlin.reflect.KClass
+import kotlin.reflect.KFunction0
+import kotlin.reflect.KFunction1
+
+data class ControlInfo(
+    val controlId: String,
+    val type: KClass<*>,
+    val getter: KFunction0<ControlChanges>,
+    val setter: KFunction1<*, Unit>
+)
+
 
 abstract class NdsiSensor(
     val sensorType: String,
@@ -22,8 +35,11 @@ abstract class NdsiSensor(
     private lateinit var dataUrl: String
     private lateinit var note: ZMQ.Socket
     private lateinit var noteUrl: String
+    private var noteSequence = 0
     private lateinit var cmd: ZMQ.Socket
     private lateinit var cmdUrl: String
+
+    protected val controls: MutableMap<String, ControlInfo> = hashMapOf()
 
     init {
         val publicEndpoint = getWifiIpAddress(manager.service)!! // FIXME
@@ -49,6 +65,13 @@ abstract class NdsiSensor(
     open fun pollCmdSocket() {
         this.cmd.recentEvents().forEach {
             Log.d(TAG, "cmdSocket recent event = $it")
+
+            val command = mapper.readValue<SensorCommand>(it[1])
+            when (command.action) {
+                "refresh_controls" -> refreshControls()
+                "set_control_value" -> setControlValue(command.controlId!!, command.value!!)
+                else -> Log.w(TAG, "Unknown command on cmd socket: $command")
+            }
         }
     }
 
@@ -69,7 +92,9 @@ abstract class NdsiSensor(
     }
 
     fun refreshControls() {
-        TODO("Implement refreshControls")
+        controls.values.forEach {
+            this.sendControlState(it)
+        }
     }
 
     fun resetAllControlValues() {
@@ -80,8 +105,15 @@ abstract class NdsiSensor(
         TODO("Implement resetControlValue")
     }
 
-    fun setControlValue(controlId: String, value: String) {
-        TODO("Implement setControlValue")
+    fun setControlValue(controlId: String, value: Any) {
+        val control = this.controls[controlId]
+        if (control == null) {
+            Log.w(TAG, "Tried to set value on unknown control! control=$controlId value=$value")
+            return
+        }
+
+        control.setter.call(value)
+        this.sendControlState(control)
     }
 
     open fun sensorAttachJson() = SensorAttach(
@@ -92,4 +124,28 @@ abstract class NdsiSensor(
         this.cmdUrl,
         this.dataUrl
     )
+
+    protected inline fun <reified T> registerControl(
+        controlId: String,
+        getter: KFunction0<ControlChanges>,
+        setter: KFunction1<T, Unit>
+    ) {
+        controls[controlId] = ControlInfo(controlId, T::class, getter, setter)
+    }
+
+    protected fun sendControlState(control: ControlInfo) {
+        note.sendMultiPart(
+            this.sensorUuid.toByteArray(),
+            mapper.writeValueAsBytes(
+                UpdateControlMessage(
+                    subject = "update",
+                    controlId = control.controlId,
+                    seq = this.noteSequence,
+                    changes = control.getter()
+                )
+            )
+        )
+
+        this.noteSequence += 1
+    }
 }
