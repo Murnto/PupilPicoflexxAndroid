@@ -17,6 +17,7 @@ import java.net.InetAddress
 import java.net.UnknownHostException
 import java.nio.ByteOrder
 import java.util.*
+import kotlin.system.measureNanoTime
 
 
 val FOREGROUND_NDSI_SERVICE = "FOREGROUND_NDSI_SERVICE"
@@ -116,4 +117,15 @@ fun Context.setupNotificationChannels() {
     // or other notification behaviors after this
     val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
     notificationManager.createNotificationChannel(mChannel)
+}
+
+inline fun <reified T> timeExec(tag: String, mark: String, block: () -> T): T {
+    val start = System.nanoTime()
+    try {
+        return block()
+    } finally {
+        val diff = System.nanoTime() - start
+
+        Log.d(tag, "$mark took ${diff / 1000} micros, ${diff / 1000000} millis")
+    }
 }

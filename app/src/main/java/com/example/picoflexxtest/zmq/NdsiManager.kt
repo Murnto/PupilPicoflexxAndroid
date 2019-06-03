@@ -131,13 +131,9 @@ class NdsiManager(
     private fun publishFrame() {
         val data = dataQueue.take()
 
-        val timeA = System.nanoTime()
-        val compressed = Zstd.compress(data, 1)
-        val timeB = System.nanoTime()
-        Log.i(
-            TAG,
-            "Compressed in ${(timeB - timeA) / 1000} micros, ${(timeB - timeA) / 1000000} millis"
-        )
+        val compressed = timeExec(TAG, "Compressing frame data") {
+            Zstd.compress(data, 1)
+        }
 
         val buf = ByteBuffer.allocate(8 * 4)
         buf.order(ByteOrder.LITTLE_ENDIAN)
