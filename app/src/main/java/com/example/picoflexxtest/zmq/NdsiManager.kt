@@ -60,8 +60,11 @@ class NdsiService : IntentService("NdsiService") {
 
     fun connect(context: Context) {
         this.fooCtx = context
-        RoyaleCameraDevice.openCamera(fooCtx) {
-            Log.i(TAG, "openCamera returned $it")
+        if (true) {
+            startServiceLoop()
+        } else {
+            RoyaleCameraDevice.openCamera(fooCtx) {
+                Log.i(TAG, "openCamera returned $it")
 
 //            it?.registerIrListener {
 //                try {
@@ -71,30 +74,33 @@ class NdsiService : IntentService("NdsiService") {
 //                }
 //            }
 
-            Log.i(TAG, "Camera getUseCases: ${it?.getUseCases()}")
-            Log.i(TAG, "Camera getCameraName: ${it?.getCameraName()}")
-            Log.i(TAG, "Camera getCameraId: ${it?.getCameraId()}")
-            Log.i(TAG, "Camera getMaxSensorWidth: ${it?.getMaxSensorWidth()}")
-            Log.i(TAG, "Camera getMaxSensorHeight: ${it?.getMaxSensorHeight()}")
-            it?.startCapture()
-            it?.addEncodedDepthDataCallback {
-                try {
-                    dataQueue.add(it)
-                } catch (e: IllegalStateException) {
-                    e.printStackTrace()
+                Log.i(TAG, "Camera getUseCases: ${it?.getUseCases()}")
+                Log.i(TAG, "Camera getCameraName: ${it?.getCameraName()}")
+                Log.i(TAG, "Camera getCameraId: ${it?.getCameraId()}")
+                Log.i(TAG, "Camera getMaxSensorWidth: ${it?.getMaxSensorWidth()}")
+                Log.i(TAG, "Camera getMaxSensorHeight: ${it?.getMaxSensorHeight()}")
+                it?.startCapture()
+                it?.addEncodedDepthDataCallback {
+                    try {
+                        dataQueue.add(it)
+                    } catch (e: IllegalStateException) {
+                        e.printStackTrace()
+                    }
                 }
-            }
-            it?.addExposureTimeCallback {
-                println("Exposure times: ${it.contentToString()}")
-            }
+                it?.addExposureTimeCallback {
+                    println("Exposure times: ${it.contentToString()}")
+                }
 
-            startServiceLoop()
+                startServiceLoop()
+            }
         }
     }
 
     private fun startServiceLoop() {
         network = Zyre("test-hostname")
         network.join(GROUP)
+//        network.setInterface("swlan0")
+//        network.setEndpoint("192.168.43.1")
         network.setVerbose()
         network.start()
         network.socket().join(GROUP)
@@ -106,7 +112,7 @@ class NdsiService : IntentService("NdsiService") {
         network.print()
 //        val publicEndpoint = ZyreShim.getZyreEndpoint(network)
         val publicEndpoint = getWifiIpAddress(fooCtx)!! // FIXME
-//        val publicEndpoint = "0.0.0.0"
+//        val publicEndpoint = "tcp://192.168.43.1"
         val genericUrl = "tcp://*:*"
         Log.i(TAG, "publicEndpoint=$publicEndpoint")
 
