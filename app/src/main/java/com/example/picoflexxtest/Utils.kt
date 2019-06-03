@@ -44,7 +44,6 @@ fun getWifiIpAddress(context: Context): String? {
 
 fun Zyre.shoutJson(group: String, obj: SensorMessage) {
     this.shouts(group, mapper.writeValueAsString(obj).also {
-        this.print()
         Log.d("Zyre.shoutJson", it)
     })
 }
