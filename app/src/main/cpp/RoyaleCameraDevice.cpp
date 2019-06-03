@@ -353,6 +353,20 @@ JNIEXPORT jobject JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevi
     return opModesList;
 }
 
+JNIEXPORT jstring JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_getCurrentUseCase(
+        JNIEnv *env, jobject instance
+) {
+    royale::String useCase;
+
+    auto ret = SELF->cameraDevice->getCurrentUseCase(useCase);
+    if (ret != royale::CameraStatus::SUCCESS) {
+        ThrowRoyaleException("Failed to get use case", (int) ret)
+        return nullptr;
+    }
+
+    return env->NewStringUTF(useCase.c_str());
+}
+
 JNIEXPORT void JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_setUseCase(
         JNIEnv *env, jobject instance, jstring jstr_usecase
 ) {
@@ -361,6 +375,43 @@ JNIEXPORT void JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_
     env->ReleaseStringUTFChars(jstr_usecase, usecase);
     if (ret != royale::CameraStatus::SUCCESS) {
         ThrowRoyaleException ("Failed to set use case", (int) ret);
+        return;
+    }
+}
+
+JNIEXPORT jboolean JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_getExposureMode(
+        JNIEnv *env, jobject instance
+) {
+    royale::ExposureMode exposureMode;
+
+    auto ret = SELF->cameraDevice->getExposureMode(exposureMode);
+    if (ret != royale::CameraStatus::SUCCESS) {
+        ThrowRoyaleException("Failed to get exposure mode", (int) ret)
+        return false;
+    }
+
+    return (jboolean) (exposureMode == royale::ExposureMode::AUTOMATIC);
+}
+
+JNIEXPORT void JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_setExposureMode(
+        JNIEnv *env, jobject instance, jboolean exposure_mode
+) {
+    auto ret = SELF->cameraDevice->setExposureMode(exposure_mode
+            ? royale::ExposureMode::AUTOMATIC
+            : royale::ExposureMode::MANUAL
+            );
+    if (ret != royale::CameraStatus::SUCCESS) {
+        ThrowRoyaleException ("Failed to set exposure mode", (int) ret);
+        return;
+    }
+}
+
+JNIEXPORT void JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_setExposureTime(
+        JNIEnv *env, jobject instance, jlong exposure_time
+) {
+    auto ret = SELF->cameraDevice->setExposureTime(exposure_time);
+    if (ret != royale::CameraStatus::SUCCESS) {
+        ThrowRoyaleException ("Failed to set exposure time", (int) ret);
         return;
     }
 }

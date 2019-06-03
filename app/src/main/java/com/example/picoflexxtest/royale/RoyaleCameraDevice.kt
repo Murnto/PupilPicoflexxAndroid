@@ -117,6 +117,7 @@ class RoyaleCameraDevice {
     external fun openCameraNative(fd: Int, vid: Int, pid: Int)
 
     external fun getUseCases(): List<String>
+    external fun getCurrentUseCase(): String
     external fun setUseCase(usecase: String)
     external fun startCapture()
     external fun stopCapture()
@@ -124,6 +125,9 @@ class RoyaleCameraDevice {
     external fun getCameraId(): String
     external fun getMaxSensorWidth(): Int
     external fun getMaxSensorHeight(): Int
+    external fun getExposureMode(): Boolean
+    external fun setExposureMode(autoExposure: Boolean)
+    external fun setExposureTime(exposureTime: Long)
 
     private val fullDepthDataCallbacks: ArrayList<(RoyaleDepthData) -> Unit> = arrayListOf()
     private fun onFullDepthData(data: RoyaleDepthData) =
