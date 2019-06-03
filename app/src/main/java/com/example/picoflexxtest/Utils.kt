@@ -17,7 +17,6 @@ import java.net.InetAddress
 import java.net.UnknownHostException
 import java.nio.ByteOrder
 import java.util.*
-import kotlin.system.measureNanoTime
 
 
 val FOREGROUND_NDSI_SERVICE = "FOREGROUND_NDSI_SERVICE"
@@ -34,11 +33,11 @@ fun getWifiIpAddress(context: Context): String? {
 
     val ipByteArray = BigInteger.valueOf(ipAddress.toLong()).toByteArray()
 
-    try {
-        return InetAddress.getByAddress(ipByteArray).hostAddress
+    return try {
+        InetAddress.getByAddress(ipByteArray).hostAddress
     } catch (ex: UnknownHostException) {
         Log.e("WIFIIP", "Unable to get host address.")
-        return null
+        null
     }
 }
 
