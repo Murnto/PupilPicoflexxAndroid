@@ -101,8 +101,6 @@ fun ZMQ.Socket.sendMultiPart(vararg data: Any) {
             }
         }
     }
-
-    Log.i("ZMQ.Socket.sendMultiPart", "Sent multipart: ${data.toList()}")
 }
 
 fun Context.setupNotificationChannels() {

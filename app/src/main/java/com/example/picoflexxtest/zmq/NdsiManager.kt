@@ -74,7 +74,7 @@ class NdsiManager(
                 }
             }
             it?.addExposureTimeCallback {
-                println("Exposure times: ${it.contentToString()}")
+                // TODO
             }
 
             startServiceLoop()
@@ -117,7 +117,6 @@ class NdsiManager(
 
         try {
             while (true) {
-                Log.d(TAG, "Loop")
                 this.pollNetwork()
                 this.pollCmdSocket()
                 this.publishFrame()
@@ -145,13 +144,9 @@ class NdsiManager(
         buf.putInt(compressed.size) // Data length
         buf.putInt(0) // Lower
 
-        val bufArray = buf.array()
-        val diff = System.nanoTime() - timeB
-        Log.i(TAG, "Encoded in $diff nanos, ${diff / 1000} micros, ${diff / 1000000} millis")
-
         this.data.sendMultiPart(
             this.network.uuid().toByteArray(),
-            bufArray,
+            buf.array(),
             compressed
         )
     }
