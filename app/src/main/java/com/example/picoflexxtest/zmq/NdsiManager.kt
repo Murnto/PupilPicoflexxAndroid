@@ -24,7 +24,7 @@ import kotlin.reflect.KMutableProperty0
 private const val GROUP = "pupil-picoflexx-v1"
 val mapper = jacksonObjectMapper().also {
     it.propertyNamingStrategy = PropertyNamingStrategy.SNAKE_CASE
-    it.setSerializationInclusion(JsonInclude.Include.ALWAYS)
+    it.setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
 }
 
 class NdsiManager(
