@@ -66,6 +66,7 @@ dependencies {
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.8"
 
     implementation 'org.zeromq:jeromq:0.5.1'
+    implementation 'me.rotol.pupil:timesync:0.1.1-SNAPSHOT'
 
 //    implementation "org.zeromq:jzmq:3.1.1-SNAPSHOT"
 //    implementation "org.zeromq:jzmq-core:3.1.1-SNAPSHOT"

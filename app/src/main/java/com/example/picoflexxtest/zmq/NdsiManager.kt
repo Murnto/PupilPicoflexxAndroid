@@ -12,6 +12,7 @@ import com.example.picoflexxtest.whisperJson
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import me.rotol.pupil.timesync.TimeSync
 import org.zeromq.SocketType
 import org.zeromq.ZContext
 import org.zeromq.ZMQ
@@ -30,9 +31,10 @@ val mapper = jacksonObjectMapper().also {
 class NdsiManager(
     val service: NdsiService
 ) {
+    private lateinit var timeSync: TimeSync
     private val TAG = NdsiManager::class.java.simpleName
     private val zContext = ZContext()
-    lateinit var network: Zyre
+    private lateinit var network: Zyre
     private var connected: Boolean = false
     private val sensors: MutableMap<String, NdsiSensor> = hashMapOf()
     private val periodicShouter = Executors.newSingleThreadScheduledExecutor()
@@ -99,6 +101,8 @@ class NdsiManager(
         this.network.start()
         this.network.socket().join(GROUP)
 
+        this.timeSync = TimeSync(existingNetwork = this.network)
+
         Log.d(TAG, "Bridging under ${this.network.name()}")
 
 //        val publicEndpoint = this.network.socket().endpoint()
@@ -120,6 +124,7 @@ class NdsiManager(
 
         try {
             while (true) {
+                this.timeSync.pollNetwork()
                 this.pollNetwork()
 
                 // FIXME this won't perform well if we ever use multiple sensors
