@@ -35,6 +35,10 @@ android {
         sourceCompatibility 1.8
         targetCompatibility 1.8
     }
+    dexOptions {
+        javaMaxHeapSize "512m"
+        preDexLibraries true
+    }
 
     // Configure multiple APKs for ABIs
     // see: https://developer.android.com/studio/build/configure-apk-splits.html#configure-abi-split
