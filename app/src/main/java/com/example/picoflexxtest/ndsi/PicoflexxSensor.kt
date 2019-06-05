@@ -7,6 +7,8 @@ import com.example.picoflexxtest.zmq.NdsiManager
 import com.github.luben.zstd.Zstd
 import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
+import kotlin.system.measureNanoTime
+import kotlin.system.measureTimeMillis
 
 class PicoflexxSensor(
     manager: NdsiManager,
@@ -106,10 +108,11 @@ class PicoflexxSensor(
 
     override fun publishFrame() {
         val data = dataQueue.take()
-        val compressed = timeExec(TAG, "Compressing frame data") {
-            Zstd.compress(data, 1)
+        lateinit var compressed: ByteArray
+        val compressTime = measureNanoTime {
+            compressed = Zstd.compress(data, 1)
         }
-        Log.d(TAG, "Compression: ${compressed.size}/${data.size} = ${compressed.size * 100 / data.size}")
+        Log.d(TAG, "Compression: ${compressed.size}/${data.size} = ${compressed.size * 100 / data.size} in ${compressTime / 1000} μs")
 
         this.sendFrame(
             NdsiHeader(
