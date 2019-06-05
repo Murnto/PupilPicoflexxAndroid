@@ -8,7 +8,6 @@ import com.example.picoflexxtest.ndsi.SensorDetach
 import com.example.picoflexxtest.recentEvents
 import com.example.picoflexxtest.royale.RoyaleCameraDevice
 import com.example.picoflexxtest.shoutJson
-import com.example.picoflexxtest.whisperJson
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -143,18 +142,14 @@ class NdsiManager(
         this.network.recentEvents().forEach {
             Log.d(TAG, "type=${it.type()}, group=${it.group()}, peer=${it.peerName()}|${it.peerUuid()}")
             if (it.type() == "JOIN" && it.group() == GROUP) {
-                this.notifySensorsAttached(it.peerUuid())
+                this.notifySensorsAttached()
             }
         }
     }
 
-    private fun notifySensorsAttached(peerUuid: String? = null) =
-        sensors.forEach { (k, v) ->
-            if (peerUuid == null) {
-                network.shoutJson(GROUP, v.sensorAttachJson())
-            } else {
-                network.whisperJson(peerUuid, v.sensorAttachJson())
-            }
+    private fun notifySensorsAttached() =
+        sensors.values.forEach {
+            network.shoutJson(GROUP, it.sensorAttachJson())
         }
 
     private fun notifySensorDetached(sensor: NdsiSensor) =
