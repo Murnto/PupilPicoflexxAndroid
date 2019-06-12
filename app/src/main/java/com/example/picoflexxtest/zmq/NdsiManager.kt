@@ -127,6 +127,8 @@ class NdsiManager(
 
         try {
             while (true) {
+                val loopStart = System.currentTimeMillis()
+
                 this.timeSync.pollNetwork()
                 this.pollNetwork()
 
@@ -134,6 +136,12 @@ class NdsiManager(
                 sensors.values.forEach {
                     it.pollCmdSocket()
                     it.publishFrame()
+                }
+
+                // Iterate at most 10 times a seocnd
+                val took = System.currentTimeMillis() - loopStart
+                if (took < 100) {
+                    Thread.sleep(100 - took)
                 }
             }
         } finally {
