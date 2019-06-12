@@ -156,4 +156,8 @@ class RoyaleCameraDevice {
 
     fun addExposureTimeCallback(block: (IntArray) -> Unit) =
         exposureTimeCallbacks.add(block)
+
+    fun close() {
+        this.deinit()
+    }
 }
