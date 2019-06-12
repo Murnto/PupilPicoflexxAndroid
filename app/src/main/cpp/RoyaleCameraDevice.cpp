@@ -259,7 +259,17 @@ JNIEXPORT void JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_
 ) {
     auto self = SELF;
 
+    LOGI("Closing RoyaleCameraDevice %p", self);
+
+    auto ret = self->cameraDevice->unregisterDataListener();
+    if (ret != royale::CameraStatus::SUCCESS) {
+        LOGE ("Failed to unregister data listener, CODE %d", static_cast<uint32_t> (ret));
+        ThrowRoyaleException("Failed to unregister data listener", static_cast<int>(ret));
+        return;
+    }
+
     env->DeleteGlobalRef(self->instance);
+    self->cameraDevice.reset();
     delete self;
 
     env->SetLongField(instance, jRoyaleCameraDevice_ptr, (jlong) 0);
