@@ -73,6 +73,7 @@ class NdsiManager(
 
     private fun addSensor(sensor: NdsiSensor) {
         Log.i(TAG, "Adding sensor $sensor")
+        sensor.setupSockets()
 
         val existing = this.sensors[sensor.sensorUuid]
         if (existing != null) {
