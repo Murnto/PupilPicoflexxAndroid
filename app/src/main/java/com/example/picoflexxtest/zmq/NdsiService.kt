@@ -5,15 +5,21 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.content.res.Configuration
+import android.net.ConnectivityManager
+import android.net.LinkProperties
+import android.net.Network
+import android.net.NetworkCapabilities
 import android.os.Binder
 import android.os.IBinder
 import android.util.Log
 import com.example.picoflexxtest.FOREGROUND_NDSI_SERVICE
 import com.example.picoflexxtest.MainActivity
 import com.example.picoflexxtest.R
+import com.example.picoflexxtest.connectivityManager
 import com.example.picoflexxtest.ndsi.PicoflexxSensor
 import com.example.picoflexxtest.royale.RoyaleCameraDevice
 import org.zeromq.zyre.Zyre
+import java.net.Inet4Address
 import java.util.concurrent.atomic.AtomicBoolean
 
 class NdsiService : Service() {
@@ -80,6 +86,7 @@ class NdsiService : Service() {
         this.manager = NdsiManager(this.network)
         this.manager.start()
 
+        this.registerWifiStateReceiver()
         this.attemptConnectPicoflexx()
 
         return START_STICKY
@@ -135,6 +142,33 @@ class NdsiService : Service() {
                 initializingDevice.set(false)
             }
         }.start()
+    }
+
+    private fun registerWifiStateReceiver() {
+        this.connectivityManager.registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
+            override fun onCapabilitiesChanged(network: Network, networkCapabilities: NetworkCapabilities) {
+                Log.d(TAG, "onCapabilitiesChanged($network, $networkCapabilities)")
+            }
+
+            override fun onLost(network: Network) {
+                Log.d(TAG, "onLost($network)")
+            }
+
+            override fun onLinkPropertiesChanged(network: Network, linkProperties: LinkProperties) {
+                Log.d(TAG, "onLinkPropertiesChanged($network, $linkProperties)")
+
+                val ip4Address = linkProperties.linkAddresses
+                    .firstOrNull { it.address is Inet4Address }
+                Log.d(TAG, "onLinkPropertiesChanged ip4Address=$ip4Address")
+                if (ip4Address != null) {
+                    this@NdsiService.manager.currentListenAddress = ip4Address.address.hostAddress
+                }
+            }
+
+            override fun onAvailable(network: Network) {
+                Log.d(TAG, "onAvailable($network)")
+            }
+        })
     }
 
     override fun onDestroy() {
