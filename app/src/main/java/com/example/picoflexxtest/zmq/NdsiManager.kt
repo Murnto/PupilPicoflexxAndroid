@@ -34,6 +34,16 @@ class NdsiManager(
     private var connected: Boolean = false
     val sensors: MutableMap<String, NdsiSensor> = ConcurrentHashMap()
     private val periodicShouter = Executors.newSingleThreadScheduledExecutor()
+    var currentListenAddress: String? = null
+        set(value) {
+            if (field != null && field != value) {
+                field = value
+
+                this.resetNetwork()
+            } else {
+                field = value
+            }
+        }
 
     init {
         ZmqUtils.nativeZyreHack()
