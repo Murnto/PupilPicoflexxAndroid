@@ -58,6 +58,15 @@ class MainActivity : AppCompatActivity() {
             Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show()
         }
+        btnReset.setOnClickListener {
+            waitService { it.restartManager() }
+        }
+        btnDetachAll.setOnClickListener {
+            waitService { it.detachAll() }
+        }
+        btnAttach.setOnClickListener {
+            waitService { it.attach() }
+        }
 
         Log.i(TAG, "Will start+bind NdsiService")
         val intent = intentFor<NdsiService>("type" to "start")

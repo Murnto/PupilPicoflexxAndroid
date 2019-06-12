@@ -39,6 +39,18 @@ class NdsiService : Service() {
         private const val TAG = "NdsiService"
     }
 
+    fun restartManager() {
+        this.manager.resetNetwork()
+    }
+
+    fun detachAll() {
+        this.manager.removeAllSensors()
+    }
+
+    fun attach() {
+        this.attemptConnectPicoflexx()
+    }
+
     private fun setupForegroundNotificaiton() {
         val pendingIntent: PendingIntent =
             Intent(this, MainActivity::class.java).let { notificationIntent ->
