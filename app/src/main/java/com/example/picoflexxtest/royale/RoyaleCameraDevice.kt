@@ -109,6 +109,7 @@ class RoyaleCameraDevice {
     var __ptr: Long = 0
 
     private external fun init()
+    private external fun deinit()
 
     init {
         init()

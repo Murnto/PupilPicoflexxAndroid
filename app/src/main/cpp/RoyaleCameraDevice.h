@@ -7,8 +7,6 @@
 
 
 class RoyaleCameraDevice : public royale::IIRImageListener, public royale::IDepthDataListener {
-    virtual ~RoyaleCameraDevice() {}
-
     void onNewData(const royale::IRImage *data);
 
     void onNewData(const royale::DepthData *data);
@@ -18,6 +16,8 @@ public:
     uint16_t height = 0;
     jobject instance = 0;
     std::unique_ptr<royale::ICameraDevice> cameraDevice;
+
+    virtual ~RoyaleCameraDevice() {}
 
     RoyaleCameraDevice(jobject instance) {
         this->instance = instance;

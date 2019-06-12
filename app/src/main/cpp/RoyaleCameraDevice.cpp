@@ -254,6 +254,17 @@ JNIEXPORT void JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_
     }
 }
 
+JNIEXPORT void JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_deinit(
+        JNIEnv *env, jobject instance
+) {
+    auto self = SELF;
+
+    env->DeleteGlobalRef(self->instance);
+    delete self;
+
+    env->SetLongField(instance, jRoyaleCameraDevice_ptr, (jlong) 0);
+}
+
 JNIEXPORT void JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_stopCapture(
         JNIEnv *env, jobject instance
 ) {
