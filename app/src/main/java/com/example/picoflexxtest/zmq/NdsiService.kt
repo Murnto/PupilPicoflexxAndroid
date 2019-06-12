@@ -11,10 +11,14 @@ import android.util.Log
 import com.example.picoflexxtest.FOREGROUND_NDSI_SERVICE
 import com.example.picoflexxtest.MainActivity
 import com.example.picoflexxtest.R
+import org.zeromq.zyre.Zyre
+import java.util.concurrent.atomic.AtomicBoolean
 
 class NdsiService : Service() {
     private val binder = TestBindServiceBinder()
-    private var manager: NdsiManager? = null
+    private val initialized = AtomicBoolean(false)
+    private lateinit var network: Zyre
+    private lateinit var manager: NdsiManager
 
     inner class TestBindServiceBinder : Binder() {
         fun getService() = this@NdsiService
@@ -60,11 +64,17 @@ class NdsiService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.i(TAG, "onStartCommand($intent, $flags, $startId)")
 
-        if (this.manager == null) {
-            this.manager = NdsiManager(this)
-            this.manager!!.start()
+        if (this.initialized.getAndSet(true)) {
+            Log.w(TAG, "onStartCommand(): ${this.javaClass.simpleName} is already initialized!")
+            return START_STICKY
         }
-        this.manager!!.connect()
+
+        this.network = Zyre("test-hostname")
+        this.network.setVerbose()
+        this.network.start()
+
+        this.manager = NdsiManager(this.network)
+        this.manager.start()
 
         return START_STICKY
     }

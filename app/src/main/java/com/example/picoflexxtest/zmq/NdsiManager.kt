@@ -1,12 +1,9 @@
 package com.example.picoflexxtest.zmq
 
-import android.content.Context
 import android.util.Log
 import com.example.picoflexxtest.ndsi.NdsiSensor
-import com.example.picoflexxtest.ndsi.PicoflexxSensor
 import com.example.picoflexxtest.ndsi.SensorDetach
 import com.example.picoflexxtest.recentEvents
-import com.example.picoflexxtest.royale.RoyaleCameraDevice
 import com.example.picoflexxtest.shoutJson
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
@@ -29,12 +26,11 @@ val mapper = jacksonObjectMapper().also {
 }
 
 class NdsiManager(
-    val service: NdsiService
+    private val network: Zyre
 ) {
     private lateinit var timeSync: TimeSync
     private val TAG = NdsiManager::class.java.simpleName
     private val zContext = ZContext()
-    private lateinit var network: Zyre
     private var connected: Boolean = false
     val sensors: MutableMap<String, NdsiSensor> = ConcurrentHashMap()
     private val periodicShouter = Executors.newSingleThreadScheduledExecutor()
@@ -49,26 +45,21 @@ class NdsiManager(
         }.start()
     }
 
-    fun connect() {
-        Log.d(TAG, "hello")
+    fun resetNetwork() {
+        this.notifyAllSensorsDetached()
+        this.network.leave(GROUP)
+        this.network.join(GROUP)
 
-        if (!connected) {
-            Thread {
-                connect(service)
-            }.start()
+        this.sensors.forEach {
+            it.value.setupSockets()
         }
+
+        this.notifySensorsAttached()
     }
 
-    private lateinit var fooCtx: Context
-
-    private fun connect(context: Context) {
-        this.fooCtx = context
-        RoyaleCameraDevice.openCamera(context) {
-            Log.i(TAG, "openCamera returned $it")
-
-            if (it != null) {
-                this.addSensor(PicoflexxSensor(this, it))
-            }
+    fun removeAllSensors() {
+        this.sensors.values.forEach {
+            this.removeSensor(it)
         }
     }
 
@@ -98,13 +89,7 @@ class NdsiManager(
     }
 
     private fun startServiceLoop() {
-        this.network = Zyre("test-hostname")
         this.network.join(GROUP)
-//        this.network.setInterface("swlan0")
-//        this.network.setEndpoint("192.168.43.1")
-        this.network.setVerbose()
-        this.network.start()
-        this.network.socket().join(GROUP)
 
         this.timeSync = TimeSync(existingNetwork = this.network)
 
