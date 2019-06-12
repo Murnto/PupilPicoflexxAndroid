@@ -11,6 +11,8 @@ import android.util.Log
 import com.example.picoflexxtest.FOREGROUND_NDSI_SERVICE
 import com.example.picoflexxtest.MainActivity
 import com.example.picoflexxtest.R
+import com.example.picoflexxtest.ndsi.PicoflexxSensor
+import com.example.picoflexxtest.royale.RoyaleCameraDevice
 import org.zeromq.zyre.Zyre
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -19,6 +21,8 @@ class NdsiService : Service() {
     private val initialized = AtomicBoolean(false)
     private lateinit var network: Zyre
     private lateinit var manager: NdsiManager
+    private val initializingDevice = AtomicBoolean(false)
+    val sensors get() = manager.sensors
 
     inner class TestBindServiceBinder : Binder() {
         fun getService() = this@NdsiService
@@ -76,6 +80,8 @@ class NdsiService : Service() {
         this.manager = NdsiManager(this.network)
         this.manager.start()
 
+        this.attemptConnectPicoflexx()
+
         return START_STICKY
     }
 
@@ -104,6 +110,31 @@ class NdsiService : Service() {
     override fun onUnbind(intent: Intent?): Boolean {
         Log.i(TAG, "onUnbind($intent)")
         return true
+    }
+
+    private fun attemptConnectPicoflexx() {
+        Log.d(TAG, "initializeConnectedPicoflexx")
+        if (initializingDevice.getAndSet(true)) {
+            Log.w(TAG, "Already in the process of connecting existing device")
+            return
+        }
+
+        Thread {
+            try {
+                RoyaleCameraDevice.openCamera(this) {
+                    Log.i(TAG, "openCamera returned $it")
+
+                    if (it != null) {
+                        this.manager.addSensor(PicoflexxSensor(this.manager, it))
+                    }
+
+                    initializingDevice.set(false)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                initializingDevice.set(false)
+            }
+        }.start()
     }
 
     override fun onDestroy() {
