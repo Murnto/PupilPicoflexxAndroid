@@ -5,28 +5,44 @@ import android.content.ServiceConnection
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.os.Bundle
+import android.os.ConditionVariable
 import android.os.IBinder
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import com.example.picoflexxtest.zmq.NdsiService
 import kotlinx.android.synthetic.main.activity_main2.*
+import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.intentFor
 
 
 class MainActivity : AppCompatActivity() {
+    private val TAG = "MainActivity"
     private lateinit var mService: NdsiService
     private var mBound: Boolean = false
+    private val boundCondition = ConditionVariable()
 
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             val binder = service as NdsiService.TestBindServiceBinder
             mService = binder.getService()
             mBound = true
+            boundCondition.open()
         }
 
         override fun onServiceDisconnected(arg0: ComponentName) {
             mBound = false
+            boundCondition.close()
+        }
+    }
+
+    private fun waitService(block: (NdsiService) -> Unit) {
+        doAsync {
+            if (this@MainActivity.boundCondition.block(5_000)) {
+                block(this@MainActivity.mService)
+            } else {
+                Log.e(TAG, "Timed out waiting for NdsiService to bind!")
+            }
         }
     }
 
@@ -43,6 +59,7 @@ class MainActivity : AppCompatActivity() {
                 .setAction("Action", null).show()
         }
 
+        Log.i(TAG, "Will start+bind NdsiService")
         val intent = intentFor<NdsiService>("type" to "start")
         startForegroundService(intent)
         bindService(intent, connection, 0)
