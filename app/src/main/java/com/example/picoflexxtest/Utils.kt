@@ -5,6 +5,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.Context.NOTIFICATION_SERVICE
 import android.content.Context.WIFI_SERVICE
+import android.net.ConnectivityManager
 import android.net.wifi.WifiManager
 import android.util.Log
 import com.example.picoflexxtest.ndsi.SensorMessage
@@ -114,6 +115,9 @@ fun Context.setupNotificationChannels() {
     val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
     notificationManager.createNotificationChannel(mChannel)
 }
+
+val Context.connectivityManager
+    get() = this.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
 inline fun <reified T> timeExec(tag: String, mark: String, block: () -> T): T {
     val start = System.nanoTime()
