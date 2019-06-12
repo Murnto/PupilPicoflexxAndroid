@@ -7,6 +7,7 @@ import com.example.picoflexxtest.zmq.NdsiManager
 import com.github.luben.zstd.Zstd
 import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.TimeUnit
 import kotlin.system.measureNanoTime
 import kotlin.system.measureTimeMillis
 
@@ -41,6 +42,7 @@ class PicoflexxSensor(
             try {
                 dataQueue.add(it)
             } catch (e: IllegalStateException) {
+                Log.e(TAG, "$this: ${e.localizedMessage}")
                 e.printStackTrace()
             }
         }
@@ -107,7 +109,13 @@ class PicoflexxSensor(
     }
 
     override fun publishFrame() {
-        val data = dataQueue.take()
+        val data = dataQueue.poll(200, TimeUnit.MILLISECONDS)
+
+        if (data == null) {
+            Log.w(TAG, "$this: Timed out waiting for data")
+            return
+        }
+
         lateinit var compressed: ByteArray
         val compressTime = measureNanoTime {
             compressed = Zstd.compress(data, 1)
