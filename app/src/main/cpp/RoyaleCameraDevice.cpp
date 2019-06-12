@@ -273,8 +273,6 @@ JNIEXPORT void JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_
         ThrowRoyaleException("Failed to stop capture", (int) ret)
         return;
     }
-
-    return;
 }
 
 JNIEXPORT void JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_startCapture(
@@ -285,8 +283,6 @@ JNIEXPORT void JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_
         ThrowRoyaleException("Failed to start capture", (int) ret)
         return;
     }
-
-    return;
 }
 
 JNIEXPORT jstring JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_getCameraName(
@@ -407,10 +403,11 @@ JNIEXPORT jboolean JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDev
 JNIEXPORT void JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_setExposureMode(
         JNIEnv *env, jobject instance, jboolean exposure_mode
 ) {
-    auto ret = SELF->cameraDevice->setExposureMode(exposure_mode
+    auto ret = SELF->cameraDevice->setExposureMode(
+            exposure_mode
             ? royale::ExposureMode::AUTOMATIC
             : royale::ExposureMode::MANUAL
-            );
+    );
     if (ret != royale::CameraStatus::SUCCESS) {
         ThrowRoyaleException ("Failed to set exposure mode", (int) ret);
         return;
