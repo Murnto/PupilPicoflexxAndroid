@@ -58,8 +58,10 @@ abstract class NdsiSensor(
         })
     }
 
-    fun unlink() {
-        TODO("Implement unlink")
+    open fun unlink() {
+        this.data.close()
+        this.note.close()
+        this.cmd.close()
     }
 
     open fun pollCmdSocket() {

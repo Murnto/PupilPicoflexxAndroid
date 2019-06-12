@@ -129,4 +129,10 @@ class PicoflexxSensor(
             this.sendControlState(this.controls["exposuretime"]!!)
         }
     }
+
+    override fun unlink() {
+        super.unlink()
+
+        this.camera.close()
+    }
 }
