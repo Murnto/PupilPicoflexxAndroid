@@ -2,14 +2,20 @@ package com.example.picoflexxtest.ndsi
 
 import android.util.Log
 import com.example.picoflexxtest.royale.RoyaleCameraDevice
-import com.example.picoflexxtest.timeExec
 import com.example.picoflexxtest.zmq.NdsiManager
 import com.github.luben.zstd.Zstd
 import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.TimeUnit
 import kotlin.system.measureNanoTime
-import kotlin.system.measureTimeMillis
+
+data class LastCompressionInfo(
+    var compressedSize: Int,
+    var uncompressedSize: Int,
+    var timeMicros: Long
+) {
+    val ratio get() = this.compressedSize * 100 / this.uncompressedSize
+}
 
 class PicoflexxSensor(
     manager: NdsiManager,
@@ -28,6 +34,7 @@ class PicoflexxSensor(
     private val height = camera.getMaxSensorHeight()
     private var priorExposure: Int = 0
     private var lastExposure: Int = 0
+    val lastCompressionData = LastCompressionInfo(0, 0, 0)
 
     init {
         Log.i(TAG, "Camera getUseCases: ${this.useCases}")
@@ -120,7 +127,11 @@ class PicoflexxSensor(
         val compressTime = measureNanoTime {
             compressed = Zstd.compress(data, 1)
         }
-        Log.d(TAG, "Compression: ${compressed.size}/${data.size} = ${compressed.size * 100 / data.size} in ${compressTime / 1000} μs")
+        this.lastCompressionData.apply {
+            compressedSize = compressed.size
+            uncompressedSize = data.size
+            timeMicros = compressTime
+        }
 
         this.sendFrame(
             NdsiHeader(
