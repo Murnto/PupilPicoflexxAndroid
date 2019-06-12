@@ -38,6 +38,10 @@ class NdsiManager(
     private val sensors: MutableMap<String, NdsiSensor> = hashMapOf()
     private val periodicShouter = Executors.newSingleThreadScheduledExecutor()
 
+    init {
+        ZmqUtils.nativeZyreHack()
+    }
+
     fun start() {
         Thread {
             startServiceLoop()
