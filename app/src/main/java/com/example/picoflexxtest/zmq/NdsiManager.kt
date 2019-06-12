@@ -16,6 +16,7 @@ import org.zeromq.SocketType
 import org.zeromq.ZContext
 import org.zeromq.ZMQ
 import org.zeromq.zyre.Zyre
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KMutableProperty0
@@ -35,7 +36,7 @@ class NdsiManager(
     private val zContext = ZContext()
     private lateinit var network: Zyre
     private var connected: Boolean = false
-    private val sensors: MutableMap<String, NdsiSensor> = hashMapOf()
+    val sensors: MutableMap<String, NdsiSensor> = ConcurrentHashMap()
     private val periodicShouter = Executors.newSingleThreadScheduledExecutor()
 
     init {
@@ -71,7 +72,7 @@ class NdsiManager(
         }
     }
 
-    private fun addSensor(sensor: NdsiSensor) {
+    fun addSensor(sensor: NdsiSensor) {
         Log.i(TAG, "Adding sensor $sensor")
         sensor.setupSockets()
 
@@ -88,12 +89,12 @@ class NdsiManager(
         this.notifySensorsAttached()
     }
 
-    private fun removeSensor(sensor: NdsiSensor) {
+    fun removeSensor(sensor: NdsiSensor) {
         Log.i(TAG, "Removing sensor $sensor")
 
-        sensor.unlink()
         this.sensors.remove(sensor.sensorUuid)
         this.notifySensorDetached(sensor)
+        sensor.unlink()
     }
 
     private fun startServiceLoop() {
