@@ -77,7 +77,9 @@ class MainActivity : AppCompatActivity() {
             if (intent.action == UsbManager.ACTION_USB_DEVICE_ATTACHED) {
                 val usbDevice = intent.getParcelableExtra<UsbDevice>(UsbManager.EXTRA_DEVICE)
                 if (usbDevice != null) {
-                    Log.d("onResume", "USB device attached: name: ${usbDevice.deviceName} ${usbDevice.vendorId}")
+                    Log.d(TAG, "USB device attached: name: ${usbDevice.deviceName} ${usbDevice.vendorId}")
+
+                    waitService { it.attach() }
                 }
             }
         }
