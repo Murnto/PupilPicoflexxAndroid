@@ -40,6 +40,10 @@ class PicoflexxSensor(
     private val cameraId = camera.getCameraId()
     private val width = camera.getMaxSensorWidth()
     private val height = camera.getMaxSensorHeight()
+
+    // We register controls with the registerControl delegate. Upon updating
+    // any of the control's values, the control will be flagged as dirty and
+    // will be updated next cycle in NdsiManager.
     private var currentExposure by registerControl(
         CONTROL_EXPOSURE_TIME,
         ::getExposureTimeControl,
@@ -52,9 +56,11 @@ class PicoflexxSensor(
         ::setAutoExposureControl,
         true
     )
+    // Pseudo-control to trigger the exposure control to be updated
     private var minExposure by registerControl(
         null, null, null, 0, updateKey = CONTROL_EXPOSURE_TIME
     )
+    // Pseudo-control to trigger the exposure control to be updated
     private var maxExposure by registerControl(
         null, null, null, 2000, updateKey = CONTROL_EXPOSURE_TIME
     )
