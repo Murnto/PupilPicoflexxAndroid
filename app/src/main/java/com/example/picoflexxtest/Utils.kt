@@ -11,6 +11,7 @@ import android.util.Log
 import com.example.picoflexxtest.ndsi.SensorMessage
 import com.example.picoflexxtest.zmq.mapper
 import org.zeromq.ZMQ
+import org.zeromq.czmq.Zmsg
 import org.zeromq.zyre.Zyre
 import org.zeromq.zyre.ZyreEvent
 import java.math.BigInteger
@@ -43,8 +44,10 @@ fun getWifiIpAddress(context: Context): String? {
 }
 
 fun Zyre.shoutJson(group: String, obj: SensorMessage) {
-    this.shouts(group, mapper.writeValueAsString(obj).also {
-        Log.d("Zyre.shoutJson", it)
+    this.shout(group, Zmsg().also {
+        it.pushstr(mapper.writeValueAsString(obj).also {
+            Log.d("Zyre.shoutJson", it)
+        })
     })
 }
 
