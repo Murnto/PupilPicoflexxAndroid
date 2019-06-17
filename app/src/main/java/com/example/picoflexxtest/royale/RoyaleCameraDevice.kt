@@ -12,7 +12,7 @@ import android.util.Log
 class RoyaleCameraDevice {
     companion object {
         private val TAG = RoyaleCameraDevice::class.java.simpleName
-        private val ACTION_USB_PERMISSION = "ACTION_ROYALE_USB_PERMISSION"
+        private const val ACTION_USB_PERMISSION = "ACTION_ROYALE_USB_PERMISSION"
 
         init {
             System.loadLibrary("usb_android")
