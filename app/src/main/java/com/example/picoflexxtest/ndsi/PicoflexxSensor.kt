@@ -12,6 +12,11 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import kotlin.system.measureNanoTime
 
+private data class PicoflexxData(
+    val encoded: ByteArray,
+    val timestamp: Long
+)
+
 class PicoflexxSensor(
     manager: NdsiManager,
     private val camera: RoyaleCameraDevice
@@ -29,7 +34,7 @@ class PicoflexxSensor(
     }
 
     private var futureExposure: ScheduledFuture<*>? = null
-    private val dataQueue = ArrayBlockingQueue<ByteArray>(5)
+    private val dataQueue = ArrayBlockingQueue<PicoflexxData>(5)
     private val useCases = camera.getUseCases()
     private val cameraName = camera.getCameraName()
     private val cameraId = camera.getCameraId()
@@ -72,7 +77,7 @@ class PicoflexxSensor(
 
         camera.addEncodedDepthDataCallback {
             try {
-                dataQueue.add(it)
+                dataQueue.add(PicoflexxData(it, System.currentTimeMillis())) // FIXME use timestamp from libroyale
                 this.manager.notifySensorReady()
             } catch (e: IllegalStateException) {
                 Log.e(TAG, "$this: ${e.localizedMessage}")
@@ -165,12 +170,12 @@ class PicoflexxSensor(
 
         lateinit var compressed: ByteArray
         val compressTime = measureNanoTime {
-            compressed = Zstd.compress(data, 1)
+            compressed = Zstd.compress(data.encoded, 1)
         }
         this.lastCompressionData.apply {
             compressedSize = compressed.size
-            uncompressedSize = data.size
             timeMicros = compressTime
+            uncompressedSize = data.encoded.size
         }
 
         this.sendFrame(
@@ -179,8 +184,8 @@ class PicoflexxSensor(
                 this.width,
                 this.height,
                 0,
-                System.currentTimeMillis() / 1000.0,
                 -1 // FIXME
+                data.timestamp / 1000.0,
             ), compressed
         )
     }
