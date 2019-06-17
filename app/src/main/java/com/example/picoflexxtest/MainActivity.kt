@@ -6,10 +6,12 @@ import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.os.Bundle
 import android.os.ConditionVariable
+import android.os.Handler
 import android.os.IBinder
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import com.example.picoflexxtest.ndsi.PicoflexxSensor
 import com.example.picoflexxtest.zmq.NdsiService
 import kotlinx.android.synthetic.main.activity_main2.*
 import org.jetbrains.anko.doAsync
@@ -21,6 +23,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mService: NdsiService
     private var mBound: Boolean = false
     private val boundCondition = ConditionVariable()
+    private val updater = Handler()
+    private var alive = false
 
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
@@ -51,6 +55,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main2)
         setSupportActionBar(toolbar)
         setupNotificationChannels()
+        this.alive = true
 
         checkUsbIntent()
 
@@ -76,8 +81,47 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        this.alive = true
+
+        this.updateStatus()
 
         checkUsbIntent()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        this.alive = false
+    }
+
+    private fun updateStatus() {
+        if (!this.alive) {
+            return
+        }
+
+        runOnUiThread {
+            if (!this::mService.isInitialized) {
+                this.lblStatus.text = "Service not bound!"
+                return@runOnUiThread
+            }
+
+            val sensor = this.mService.sensors.values.firstOrNull {
+                it is PicoflexxSensor
+            } as PicoflexxSensor?
+            if (sensor == null) {
+                this.lblStatus.text = "Picoflexx not initialized."
+                return@runOnUiThread
+            }
+
+            val compression = sensor.lastCompressionData
+            this.lblStatus.text = """
+                Frames queued: ${sensor.queueSize}
+                Last frame: ${compression.compressedSize}/${compression.uncompressedSize}
+                    Compression ratio: ${compression.ratio}
+                    Time taken: ${compression.timeMicros}μs
+            """.trimIndent()
+        }
+
+        this.updater.postDelayed(this::updateStatus, 1000)
     }
 
     private fun checkUsbIntent() {

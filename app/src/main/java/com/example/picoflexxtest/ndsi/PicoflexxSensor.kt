@@ -65,6 +65,7 @@ class PicoflexxSensor(
         0
     )
     val lastCompressionData = LastCompressionInfo(0, 0, 0)
+    val queueSize get() = this.dataQueue.size
 
     init {
         Log.i(TAG, "Camera getUseCases: ${this.useCases}")
