@@ -24,7 +24,7 @@ jmethodID jRoyaleCameraDevice_onExposureTime;
 
 #define ThrowRoyaleException(message, code) \
 {                                                                                                                                       \
-    auto royaleErrorMessage = royale::getErrorString((royale::CameraStatus) code);                                                      \
+    auto royaleErrorMessage = royale::getErrorString((royale::CameraStatus) (code));                                                      \
     jstring jstr_royaleErrorMessage = env->NewStringUTF(royaleErrorMessage.c_str());                                                    \
     jstring jstr_message = env->NewStringUTF(message);                                                                                  \
     auto throwable = env->NewObject(jRoyaleCameraException, jRoyaleCameraException_init, jstr_message, code, jstr_royaleErrorMessage);  \
