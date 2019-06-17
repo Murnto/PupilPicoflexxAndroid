@@ -174,8 +174,8 @@ class PicoflexxSensor(
         }
         this.lastCompressionData.apply {
             compressedSize = compressed.size
-            timeMicros = compressTime
             uncompressedSize = data.encoded.size
+            timeMicros = compressTime / 1000
         }
 
         this.sendFrame(
