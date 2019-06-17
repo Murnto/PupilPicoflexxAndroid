@@ -14,13 +14,7 @@ import java.nio.ByteBuffer
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction0
 import kotlin.reflect.KFunction1
-
-data class ControlInfo(
-    val controlId: String,
-    val type: KClass<*>,
-    val getter: KFunction0<ControlChanges>,
-    val setter: KFunction1<*, Unit>
-)
+import kotlin.reflect.KProperty
 
 
 abstract class NdsiSensor(
@@ -38,7 +32,9 @@ abstract class NdsiSensor(
     private lateinit var cmd: ZMQ.Socket
     private lateinit var cmdUrl: String
 
-    protected val controls: MutableMap<String, ControlInfo> = hashMapOf()
+    protected val changedControls = HashSet<Any>()
+    protected val controls: MutableMap<String, ControlInfo<*>> = hashMapOf()
+    protected val controlsByChangeKey: MutableMap<Any, MutableList<ControlInfo<*>>> = hashMapOf()
 
     fun setupSockets() {
         Log.d(TAG, "setupSockets() sensorUuid=$sensorUuid")
@@ -130,7 +126,7 @@ abstract class NdsiSensor(
             return
         }
 
-        control.setter.call(value)
+        control.setter!!.call(value)
         this.sendControlState(control)
     }
 
@@ -143,27 +139,70 @@ abstract class NdsiSensor(
         this.dataUrl
     )
 
-    protected inline fun <reified T> registerControl(
-        controlId: String,
-        getter: KFunction0<ControlChanges>,
-        setter: KFunction1<T, Unit>
-    ) {
-        controls[controlId] = ControlInfo(controlId, T::class, getter, setter)
-    }
-
-    protected fun sendControlState(control: ControlInfo) {
+    protected fun sendControlState(control: ControlInfo<*>) {
         note.sendMultiPart(
             this.sensorUuid.toByteArray(),
             mapper.writeValueAsBytes(
                 UpdateControlMessage(
                     subject = "update",
-                    controlId = control.controlId,
+                    controlId = control.controlId!!,
                     seq = this.noteSequence,
-                    changes = control.getter()
+                    changes = control.getter!!()
                 )
             )
         )
 
         this.noteSequence += 1
+    }
+
+    protected inline fun <reified T : Any> registerControl(
+        controlId: String?,
+        getter: KFunction0<ControlChanges>?,
+        setter: KFunction1<T, Unit>?,
+        value: T,
+        updateKey: Any? = null
+    ) = ControlInfo(
+        controlId,
+        T::class,
+        getter,
+        setter,
+        value,
+        updateKey
+    )
+
+    inner class ControlInfo<T : Any>(
+        val controlId: String?,
+        val type: KClass<T>,
+        val getter: KFunction0<ControlChanges>?,
+        val setter: KFunction1<T, Unit>?,
+        var value: T,
+        updateKey: Any? = null
+    ) {
+        // If controlId is null, updateKey MUST be non-null
+        val updateKey: Any = updateKey ?: this.controlId!!
+
+        init {
+            if (this@NdsiSensor.controls.containsKey(this.controlId)) {
+                Log.e(TAG, "There's already a control registered with id=${this.controlId}!")
+            }
+
+            if (this.controlId != null) {
+                this@NdsiSensor.controls[this.controlId] = this
+                this@NdsiSensor.controlsByChangeKey.putIfAbsent(this.updateKey, arrayListOf(this))
+                    ?.add(this)
+            }
+        }
+
+        operator fun getValue(thisRef: NdsiSensor, property: KProperty<*>): T {
+            return this.value
+        }
+
+        operator fun setValue(thisRef: NdsiSensor, property: KProperty<*>, value: T) {
+            if (this.value != value) {
+                this@NdsiSensor.changedControls.add(this.updateKey)
+
+                this.value = value
+            }
+        }
     }
 }

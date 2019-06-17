@@ -18,15 +18,43 @@ class PicoflexxSensor(
     UUID.nameUUIDFromBytes(camera.getCameraId().toByteArray()).toString(),
     manager
 ) {
-    private val TAG = PicoflexxSensor::class.java.simpleName
+    companion object {
+        private val TAG = PicoflexxSensor::class.java.simpleName
+        private const val CONTROL_USE_CASE = "usecase"
+        private const val CONTROL_AUTO_EXPOSURE = "autoexposure"
+        private const val CONTROL_EXPOSURE_TIME = "exposuretime"
+    }
+
     private val dataQueue = ArrayBlockingQueue<ByteArray>(5)
     private val useCases = camera.getUseCases()
     private val cameraName = camera.getCameraName()
     private val cameraId = camera.getCameraId()
     private val width = camera.getMaxSensorWidth()
     private val height = camera.getMaxSensorHeight()
-    private var priorExposure: Int = 0
-    private var lastExposure: Int = 0
+    private var currentExposure by registerControl(
+        CONTROL_EXPOSURE_TIME,
+        ::getExposureTimeControl,
+        ::setExposureTimeControl,
+        0
+    )
+    private var autoExposure by registerControl(
+        CONTROL_AUTO_EXPOSURE,
+        ::getAutoExposureControl,
+        ::setAutoExposureControl,
+        true
+    )
+    private var minExposure by registerControl(
+        null, null, null, 0, updateKey = CONTROL_EXPOSURE_TIME
+    )
+    private var maxExposure by registerControl(
+        null, null, null, 2000, updateKey = CONTROL_EXPOSURE_TIME
+    )
+    private var currentUseCase by registerControl(
+        CONTROL_USE_CASE,
+        ::getUsecaseControl,
+        ::setUsecaseControl,
+        0
+    )
     val lastCompressionData = LastCompressionInfo(0, 0, 0)
 
     init {
@@ -47,13 +75,9 @@ class PicoflexxSensor(
             }
         }
         camera.addExposureTimeCallback {
-            this.priorExposure = this.lastExposure
-            this.lastExposure = it[1]
+            this.currentExposure = it[1]
         }
 
-        registerControl("usecase", ::getUsecaseControl, ::setUsecaseControl)
-        registerControl("autoexposure", ::getAutoExposureControl, ::setAutoExposureControl)
-        registerControl("exposuretime", ::getExposureTimeControl, ::setExposureTimeControl)
     }
 
     protected fun getUsecaseControl(): ControlChanges {
@@ -88,12 +112,12 @@ class PicoflexxSensor(
     protected fun setAutoExposureControl(value: Boolean) {
         this.camera.setExposureMode(value)
 
-        this.sendControlState(this.controls["exposuretime"]!!)
+        this.sendControlState(this.controls[CONTROL_EXPOSURE_TIME]!!)
     }
 
     protected fun getExposureTimeControl(): ControlChanges {
         return ControlChanges(
-            value = this.lastExposure,
+            value = this.currentExposure,
             readonly = this.camera.getExposureMode(),
             min = 0, // TODO
             max = 2000, // TODO
