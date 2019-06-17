@@ -132,9 +132,9 @@ class PicoflexxSensor(
         return ControlChanges(
             value = this.currentExposure,
             readonly = this.camera.getExposureMode(),
-            min = 0, // TODO
-            max = 2000, // TODO
-            def = 500, // TODO
+            min = this.minExposure,
+            max = this.maxExposure,
+            def = this.maxExposure,
             res = 1,
             dtype = "integer",
             caption = "Exposure time"
