@@ -91,6 +91,8 @@ abstract class NdsiSensor(
         }
     }
 
+    abstract fun hasFrame(): Boolean
+
     abstract fun publishFrame()
 
     protected fun sendFrame(header: NdsiHeader, data: ByteArray) {

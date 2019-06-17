@@ -132,7 +132,9 @@ class NdsiManager(
                 // FIXME this won't perform well if we ever use multiple sensors
                 sensors.values.forEach {
                     it.pollCmdSocket()
-                    it.publishFrame()
+                    while (it.hasFrame()) {
+                        it.publishFrame()
+                    }
                 }
 
                 // Iterate at most 10 times a seocnd

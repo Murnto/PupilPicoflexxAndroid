@@ -115,6 +115,8 @@ class PicoflexxSensor(
         this.camera.setExposureTime(value.toLong())
     }
 
+    override fun hasFrame() = !this.dataQueue.isEmpty()
+
     override fun publishFrame() {
         val data = dataQueue.poll(200, TimeUnit.MILLISECONDS)
 
