@@ -7,6 +7,8 @@ import com.example.picoflexxtest.zmq.NdsiManager
 import com.github.luben.zstd.Zstd
 import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import kotlin.system.measureNanoTime
 
@@ -19,12 +21,14 @@ class PicoflexxSensor(
     manager
 ) {
     companion object {
+        private val sharedScheduler = Executors.newSingleThreadScheduledExecutor()
         private val TAG = PicoflexxSensor::class.java.simpleName
         private const val CONTROL_USE_CASE = "usecase"
         private const val CONTROL_AUTO_EXPOSURE = "autoexposure"
         private const val CONTROL_EXPOSURE_TIME = "exposuretime"
     }
 
+    private var futureExposure: ScheduledFuture<*>? = null
     private val dataQueue = ArrayBlockingQueue<ByteArray>(5)
     private val useCases = camera.getUseCases()
     private val cameraName = camera.getCameraName()
@@ -138,7 +142,14 @@ class PicoflexxSensor(
     }
 
     protected fun setExposureTimeControl(value: Int) {
-        this.camera.setExposureTime(value.toLong())
+        val futureExposure = this.futureExposure
+        if (futureExposure != null) {
+            futureExposure.cancel(false)
+            this.futureExposure = null
+        }
+        this.futureExposure = sharedScheduler.schedule({
+            this.camera.setExposureTime(value.toLong())
+        }, 200, TimeUnit.MILLISECONDS)
     }
 
     override fun hasFrame() = !this.dataQueue.isEmpty()
