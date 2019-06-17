@@ -77,7 +77,14 @@ class PicoflexxSensor(
         camera.addExposureTimeCallback {
             this.currentExposure = it[1]
         }
+    }
 
+    private fun updateControlState() {
+        this.currentUseCase = this.useCases.indexOf(this.camera.getCurrentUseCase())
+        this.autoExposure = this.camera.getExposureMode()
+        val limits = this.camera.getExposureLimits()
+        this.minExposure = limits[0]
+        this.maxExposure = limits[1]
     }
 
     protected fun getUsecaseControl(): ControlChanges {
@@ -98,6 +105,7 @@ class PicoflexxSensor(
         }
 
         this.camera.setUseCase(this.useCases[value])
+        this.updateControlState()
     }
 
     protected fun getAutoExposureControl(): ControlChanges {
@@ -113,6 +121,7 @@ class PicoflexxSensor(
         this.camera.setExposureMode(value)
 
         this.sendControlState(this.controls[CONTROL_EXPOSURE_TIME]!!)
+        this.updateControlState()
     }
 
     protected fun getExposureTimeControl(): ControlChanges {
@@ -162,10 +171,6 @@ class PicoflexxSensor(
                 -1 // FIXME
             ), compressed
         )
-
-        if (this.priorExposure != this.lastExposure) {
-            this.sendControlState(this.controls["exposuretime"]!!)
-        }
     }
 
     override fun unlink() {

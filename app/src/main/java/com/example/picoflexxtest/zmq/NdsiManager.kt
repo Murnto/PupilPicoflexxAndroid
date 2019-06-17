@@ -135,6 +135,7 @@ class NdsiManager(
                     while (it.hasFrame()) {
                         it.publishFrame()
                     }
+                    it.sendUpdatedControls()
                 }
 
                 // Iterate at most 10 times a seocnd

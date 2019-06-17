@@ -155,6 +155,17 @@ abstract class NdsiSensor(
         this.noteSequence += 1
     }
 
+    fun sendUpdatedControls() {
+        this.changedControls.toList()
+        val changed = this.changedControls.clone() as Set<*>
+        this.changedControls.removeAll(changed)
+        changed.forEach { changeKey ->
+            this.controlsByChangeKey[changeKey]?.forEach { control ->
+                this.sendControlState(control)
+            }
+        }
+    }
+
     protected inline fun <reified T : Any> registerControl(
         controlId: String?,
         getter: KFunction0<ControlChanges>?,
