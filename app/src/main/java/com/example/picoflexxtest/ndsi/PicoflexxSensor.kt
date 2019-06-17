@@ -184,8 +184,8 @@ class PicoflexxSensor(
                 this.width,
                 this.height,
                 0,
-                -1 // FIXME
                 data.timestamp / 1000.0,
+                this.currentExposure
             ), compressed
         )
     }
