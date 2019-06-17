@@ -16,6 +16,8 @@ import org.zeromq.zyre.Zyre
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 import kotlin.reflect.KMutableProperty0
 
 
@@ -34,6 +36,8 @@ class NdsiManager(
     private var connected: Boolean = false
     val sensors: MutableMap<String, NdsiSensor> = ConcurrentHashMap()
     private val periodicShouter = Executors.newSingleThreadScheduledExecutor()
+    private val sleepLock = ReentrantLock()
+    private val sleepCondition = this.sleepLock.newCondition()
     var currentListenAddress: String? = null
         set(value) {
             if (field != null && field != value) {
@@ -138,15 +142,26 @@ class NdsiManager(
                     it.sendUpdatedControls()
                 }
 
-                // Iterate at most 10 times a seocnd
+                // Iterate at most once a second without new data
                 val took = System.currentTimeMillis() - loopStart
-                if (took < 100) {
-                    Thread.sleep(100 - took)
+                if (took < 1000) {
+                    this.sleepLock.withLock {
+                        this.sleepCondition.await(1000 - took, TimeUnit.MILLISECONDS)
+                    }
                 }
             }
         } finally {
             Log.d(TAG, "Leaving bridging loop...")
             this.notifyAllSensorsDetached()
+        }
+    }
+
+    /**
+     * Indicate that a sensor has new data available
+     */
+    fun notifySensorReady() {
+        this.sleepLock.withLock {
+            this.sleepCondition.signalAll()
         }
     }
 

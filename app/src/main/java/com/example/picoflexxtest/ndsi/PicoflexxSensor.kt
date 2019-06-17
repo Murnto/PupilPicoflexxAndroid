@@ -73,6 +73,7 @@ class PicoflexxSensor(
         camera.addEncodedDepthDataCallback {
             try {
                 dataQueue.add(it)
+                this.manager.notifySensorReady()
             } catch (e: IllegalStateException) {
                 Log.e(TAG, "$this: ${e.localizedMessage}")
                 e.printStackTrace()
