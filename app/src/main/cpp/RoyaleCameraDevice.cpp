@@ -351,6 +351,26 @@ JNIEXPORT jint JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_
     return (jint) self->height;
 }
 
+JNIEXPORT jintArray JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_getExposureLimits(
+        JNIEnv *env, jobject instance
+) {
+    auto self = SELF;
+
+    royale::Pair<uint32_t, uint32_t> limits;
+    jintArray jLimits = env->NewIntArray(2);
+
+    auto ret = self->cameraDevice->getExposureLimits(limits);
+    if (ret != royale::CameraStatus::SUCCESS) {
+        ThrowRoyaleException("Failed to get exposure limits", (int) ret)
+        return jLimits;
+    }
+
+    jint fillLimits[] = {(jint) limits.first, (jint) limits.second};
+    env->SetIntArrayRegion(jLimits, 0, 2, fillLimits);
+
+    return jLimits;
+}
+
 JNIEXPORT jobject JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_getUseCases(
         JNIEnv *env, jobject instance
 ) {
