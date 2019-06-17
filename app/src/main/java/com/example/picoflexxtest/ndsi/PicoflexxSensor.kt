@@ -1,6 +1,7 @@
 package com.example.picoflexxtest.ndsi
 
 import android.util.Log
+import com.example.picoflexxtest.ndsi.picoflexx.LastCompressionInfo
 import com.example.picoflexxtest.royale.RoyaleCameraDevice
 import com.example.picoflexxtest.zmq.NdsiManager
 import com.github.luben.zstd.Zstd
@@ -8,14 +9,6 @@ import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.TimeUnit
 import kotlin.system.measureNanoTime
-
-data class LastCompressionInfo(
-    var compressedSize: Int,
-    var uncompressedSize: Int,
-    var timeMicros: Long
-) {
-    val ratio get() = this.compressedSize * 100 / this.uncompressedSize
-}
 
 class PicoflexxSensor(
     manager: NdsiManager,
