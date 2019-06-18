@@ -18,14 +18,12 @@ import com.example.picoflexxtest.R
 import com.example.picoflexxtest.connectivityManager
 import com.example.picoflexxtest.ndsi.PicoflexxSensor
 import com.example.picoflexxtest.royale.RoyaleCameraDevice
-import org.zeromq.zyre.Zyre
 import java.net.Inet4Address
 import java.util.concurrent.atomic.AtomicBoolean
 
 class NdsiService : Service() {
     private val binder = TestBindServiceBinder()
     private val initialized = AtomicBoolean(false)
-    private lateinit var network: Zyre
     private lateinit var manager: NdsiManager
     private val initializingDevice = AtomicBoolean(false)
     val sensors get() = manager.sensors
@@ -91,11 +89,7 @@ class NdsiService : Service() {
             return START_STICKY
         }
 
-        this.network = Zyre("test-hostname")
-        this.network.setVerbose()
-        this.network.start()
-
-        this.manager = NdsiManager(this.network)
+        this.manager = NdsiManager()
         this.manager.start()
 
         this.registerWifiStateReceiver()
