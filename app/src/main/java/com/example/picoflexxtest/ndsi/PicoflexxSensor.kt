@@ -36,11 +36,11 @@ class PicoflexxSensor(
 
     private var futureExposure: ScheduledFuture<*>? = null
     private val dataQueue = ArrayBlockingQueue<PicoflexxData>(5)
-    private val useCases = camera.getUseCases()
-    private val cameraName = camera.getCameraName()
-    private val cameraId = camera.getCameraId()
-    private val width = camera.getMaxSensorWidth()
-    private val height = camera.getMaxSensorHeight()
+    val useCases = camera.getUseCases()
+    val cameraName = camera.getCameraName()
+    val cameraId = camera.getCameraId()
+    override val width = camera.getMaxSensorWidth()
+    override val height = camera.getMaxSensorHeight()
 
     // We register controls with the registerControl delegate. Upon updating
     // any of the control's values, the control will be flagged as dirty and
@@ -208,14 +208,10 @@ class PicoflexxSensor(
         }
 
         this.sendFrame(
-            NdsiHeader(
-                FLAG_ALL,// or FLAG_COMPRESSED,
-                this.width,
-                this.height,
-                0,
-                data.timestamp / 1000.0,
-                this.currentExposure
-            ), compressed
+            FLAG_ALL,
+            data.timestamp / 1000.0,
+            this.currentExposure,
+            compressed
         )
     }
 

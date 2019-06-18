@@ -25,14 +25,17 @@ abstract class NdsiSensor(
     private val TAG = NdsiSensor::class.java.simpleName
 
     private lateinit var data: ZMQ.Socket
+    protected var dataSequence = 0
     private lateinit var dataUrl: String
     private lateinit var note: ZMQ.Socket
     private lateinit var noteUrl: String
     private var noteSequence = 0
     private lateinit var cmd: ZMQ.Socket
     private lateinit var cmdUrl: String
+    protected abstract val width: Int
+    protected abstract val height: Int
 
-    protected val changedControls = HashSet<Any>()
+    protected open val changedControls = HashSet<Any>()
     protected val controls: MutableMap<String, ControlInfo<*>> = hashMapOf()
     protected val controlsByChangeKey: MutableMap<Any, MutableList<ControlInfo<*>>> = hashMapOf()
 
@@ -94,6 +97,19 @@ abstract class NdsiSensor(
     abstract fun hasFrame(): Boolean
 
     abstract fun publishFrame()
+
+    protected fun sendFrame(flag: Int, timestamp: Double, extra: Int, data: ByteArray) {
+        this.sendFrame(
+            NdsiHeader(
+                flag,
+                this.width,
+                this.height,
+                this.dataSequence++,
+                timestamp,
+                extra
+            ), data
+        )
+    }
 
     protected fun sendFrame(header: NdsiHeader, data: ByteArray) {
         header.dataLength = data.size
