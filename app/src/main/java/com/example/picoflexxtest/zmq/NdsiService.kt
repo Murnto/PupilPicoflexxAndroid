@@ -3,8 +3,12 @@ package com.example.picoflexxtest.zmq
 import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.res.Configuration
+import android.hardware.usb.UsbManager
 import android.net.ConnectivityManager
 import android.net.LinkProperties
 import android.net.Network
@@ -25,6 +29,7 @@ class NdsiService : Service() {
     private val binder = TestBindServiceBinder()
     private val initialized = AtomicBoolean(false)
     private lateinit var manager: NdsiManager
+    private var detachReceiver: BroadcastReceiver? = null
     private val initializingDevice = AtomicBoolean(false)
     val sensors get() = manager.sensors
 
@@ -92,6 +97,7 @@ class NdsiService : Service() {
         this.manager = NdsiManager()
         this.manager.start()
 
+        this.registerDetachReceiver()
         this.registerWifiStateReceiver()
         this.attemptConnectPicoflexx()
 
@@ -148,6 +154,20 @@ class NdsiService : Service() {
                 initializingDevice.set(false)
             }
         }.start()
+    }
+
+    private fun registerDetachReceiver() {
+        this.detachReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                Log.i(TAG, "mUsbReceiver.onReceive context = [$context], intent = [$intent]")
+
+                if (intent.action == UsbManager.ACTION_USB_DEVICE_DETACHED) {
+                    this@NdsiService.checkAllSensors()
+                }
+            }
+        }
+
+        this.registerReceiver(this.detachReceiver, IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED))
     }
 
     private fun registerWifiStateReceiver() {
