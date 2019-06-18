@@ -416,6 +416,34 @@ JNIEXPORT void JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_
     }
 }
 
+JNIEXPORT jboolean JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_isConnected(
+        JNIEnv *env, jobject instance
+) {
+    bool connected;
+
+    auto ret = SELF->cameraDevice->isConnected(connected);
+    if (ret != royale::CameraStatus::SUCCESS) {
+        ThrowRoyaleException("Failed to get isConnected", (int) ret)
+        return static_cast<jboolean>(false);
+    }
+
+    return (jboolean) connected;
+}
+
+JNIEXPORT jboolean JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_isCapturing(
+        JNIEnv *env, jobject instance
+) {
+    bool capturing;
+
+    auto ret = SELF->cameraDevice->isCapturing(capturing);
+    if (ret != royale::CameraStatus::SUCCESS) {
+        ThrowRoyaleException("Failed to get isCapturing", (int) ret)
+        return static_cast<jboolean>(false);
+    }
+
+    return (jboolean) capturing;
+}
+
 JNIEXPORT jboolean JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_getExposureMode(
         JNIEnv *env, jobject instance
 ) {

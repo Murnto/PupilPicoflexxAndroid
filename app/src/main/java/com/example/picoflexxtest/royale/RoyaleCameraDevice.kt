@@ -126,6 +126,8 @@ class RoyaleCameraDevice {
     external fun getCameraId(): String
     external fun getMaxSensorWidth(): Int
     external fun getMaxSensorHeight(): Int
+    external fun isCapturing(): Boolean
+    external fun isConnected(): Boolean
     external fun getExposureMode(): Boolean
     external fun getExposureLimits(): IntArray
     external fun setExposureMode(autoExposure: Boolean)
