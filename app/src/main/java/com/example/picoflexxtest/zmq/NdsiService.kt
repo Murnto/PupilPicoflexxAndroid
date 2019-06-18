@@ -183,4 +183,6 @@ class NdsiService : Service() {
 
         stopForeground(true)
     }
+
+    fun checkAllSensors() = this.manager.checkAllSensors()
 }

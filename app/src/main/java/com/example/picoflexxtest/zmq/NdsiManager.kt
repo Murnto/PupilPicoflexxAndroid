@@ -174,6 +174,23 @@ class NdsiManager {
     }
 
     /**
+     * Ping every sensor to check they're still present and alive
+     */
+    fun checkAllSensors() {
+        Log.i(TAG, "NdsiManager.checkAllSensors()")
+        val failed = ArrayList<NdsiSensor>()
+
+        this.sensors.values.forEach {
+            if (!it.ping()) {
+                failed.add(it)
+            }
+        }
+
+        // Detach all sensors that failed the check
+        failed.forEach(this::removeSensor)
+    }
+
+    /**
      * Indicate that a sensor has new data available
      */
     fun notifySensorReady() {

@@ -3,6 +3,7 @@ package com.example.picoflexxtest.ndsi
 import android.util.Log
 import com.example.picoflexxtest.ndsi.picoflexx.LastCompressionInfo
 import com.example.picoflexxtest.royale.RoyaleCameraDevice
+import com.example.picoflexxtest.royale.RoyaleCameraException
 import com.example.picoflexxtest.zmq.NdsiManager
 import com.github.luben.zstd.Zstd
 import java.util.*
@@ -94,6 +95,27 @@ class PicoflexxSensor(
         camera.addExposureTimeCallback {
             this.currentExposure = it[1]
         }
+    }
+
+    override fun ping(): Boolean {
+        try {
+            val originalMode = this.autoExposure
+            Log.i(TAG, "Set auto exposure=${this.camera.setExposureMode(false)}")
+            Log.i(TAG, "Check same exp=${this.camera.setExposureTime(this.currentExposure.toLong())}")
+            Log.i(TAG, "Set prev auto exposure=${this.camera.setExposureMode(originalMode)}")
+        } catch (e: RoyaleCameraException) {
+            if (e.code == 4100) { // DEVICE_IS_BUSY
+                Log.w(TAG, "$this: Busy ${e.localizedMessage}")
+                return true
+            } else if (e.code == 1026 || e.code == 1028) { // DISCONNECTED or TIMEOUT
+                Log.w(TAG, "$this: Disconnected ${e.localizedMessage}")
+                return false
+            }
+
+            e.printStackTrace()
+            return false
+        }
+        return true
     }
 
     private fun updateControlState() {

@@ -36,6 +36,10 @@ abstract class NdsiSensor(
     protected val controls: MutableMap<String, ControlInfo<*>> = hashMapOf()
     protected val controlsByChangeKey: MutableMap<Any, MutableList<ControlInfo<*>>> = hashMapOf()
 
+    open fun ping(): Boolean {
+        return true
+    }
+
     fun setupSockets() {
         Log.d(TAG, "setupSockets() sensorUuid=$sensorUuid")
 
