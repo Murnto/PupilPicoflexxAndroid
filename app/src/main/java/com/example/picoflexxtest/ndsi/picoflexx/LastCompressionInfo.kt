@@ -5,5 +5,10 @@ data class LastCompressionInfo(
     var uncompressedSize: Int,
     var timeMicros: Long
 ) {
-    val ratio get() = this.compressedSize * 100 / this.uncompressedSize
+    val ratio
+        get() = if (this.uncompressedSize == 0) {
+            0
+        } else {
+            this.compressedSize * 100 / this.uncompressedSize
+        }
 }
