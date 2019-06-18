@@ -70,7 +70,7 @@ dependencies {
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.8"
 
     implementation 'org.zeromq:jeromq:0.5.1'
-    implementation 'me.rotol.pupil:timesync:0.1.4-SNAPSHOT'
+    implementation 'me.rotol.pupil:timesync:0.1.6-SNAPSHOT'
     implementation 'org.slf4j:slf4j-android:1.7.26'
 
 //    implementation "org.zeromq:jzmq:3.1.1-SNAPSHOT"

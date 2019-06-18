@@ -62,9 +62,22 @@ class NdsiManager {
         }.start()
     }
 
-    fun resetNetwork() {
+    fun resetNetwork(soft: Boolean = false) {
+        Log.i(TAG, "resetNetwork()")
         this.notifyAllSensorsDetached()
         this.network.leave(GROUP)
+        this.timeSync.stop()
+
+        if (!soft) {
+            // Completely replace the Zyre network
+            this.network.stop()
+            this.network.close()
+
+            this.network = Zyre(hostname)
+            this.network.start()
+        }
+
+        this.timeSync.restartDiscovery(this.network)
         this.network.join(GROUP)
 
         this.sensors.forEach {

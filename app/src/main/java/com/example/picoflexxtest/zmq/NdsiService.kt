@@ -37,8 +37,8 @@ class NdsiService : Service() {
         private const val TAG = "NdsiService"
     }
 
-    fun restartManager() {
-        this.manager.resetNetwork()
+    fun restartManager(soft: Boolean = false) {
+        this.manager.resetNetwork(soft = soft)
     }
 
     fun detachAll() {
