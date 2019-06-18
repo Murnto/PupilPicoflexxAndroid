@@ -66,11 +66,11 @@ class MainActivity : AppCompatActivity() {
         btnReset.setOnClickListener {
             waitService { it.restartManager() }
         }
-        btnDetachAll.setOnClickListener {
-            waitService { it.detachAll() }
+        btnPingSensors.setOnClickListener {
+            waitService { it.checkAllSensors() }
         }
-        btnAttach.setOnClickListener {
-            waitService { it.attach() }
+        btnSoftReset.setOnClickListener {
+            waitService { it.restartManager(soft = true) }
         }
 
         Log.i(TAG, "Will start+bind NdsiService")
@@ -133,6 +133,10 @@ class MainActivity : AppCompatActivity() {
                     Log.d(TAG, "USB device attached: name: ${usbDevice.deviceName} ${usbDevice.vendorId}")
 
                     waitService { it.attach() }
+                }
+            } else if (intent.action == UsbManager.ACTION_USB_DEVICE_DETACHED) {
+                waitService {
+                    it.checkAllSensors()
                 }
             }
         }
