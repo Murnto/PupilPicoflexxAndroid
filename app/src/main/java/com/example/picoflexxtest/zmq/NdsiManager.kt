@@ -32,7 +32,6 @@ class NdsiManager {
     private lateinit var timeSync: TimeSync
     private val TAG = NdsiManager::class.java.simpleName
     private val zContext = ZContext()
-    private var connected: Boolean = false
     val sensors: MutableMap<String, NdsiSensor> = ConcurrentHashMap()
     private val periodicShouter = Executors.newSingleThreadScheduledExecutor()
     private val sleepLock = ReentrantLock()
@@ -125,13 +124,6 @@ class NdsiManager {
         this.timeSync = TimeSync(existingNetwork = this.network)
 
         Log.d(TAG, "Bridging under ${this.network.name()}")
-
-//        val publicEndpoint = this.network.socket().endpoint()
-        Thread.sleep(1000)
-        this.network.print()
-//        val publicEndpoint = ZyreShim.getZyreEndpoint(network)
-
-        connected = true // FIXME race condition
 
         loop()
     }
