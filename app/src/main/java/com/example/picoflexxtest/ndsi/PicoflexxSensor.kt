@@ -184,12 +184,16 @@ class PicoflexxSensor(
 
         this.sendControlState(this.controls[CONTROL_EXPOSURE_TIME]!!)
         this.updateControlState()
+
+        // Label exposure control as dirty to ensure the read only status is
+        // correctly updated
+        this.changedControls.add(CONTROL_EXPOSURE_TIME)
     }
 
     protected fun getExposureTimeControl(): ControlChanges {
         return ControlChanges(
             value = this.currentExposure,
-            readonly = this.camera.getExposureMode(),
+            readonly = this.autoExposure,
             min = this.minExposure,
             max = this.maxExposure,
             def = this.maxExposure,
