@@ -351,6 +351,38 @@ JNIEXPORT jint JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_
     return (jint) self->height;
 }
 
+JNIEXPORT jint JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_getFrameRate(
+        JNIEnv *env, jobject instance
+) {
+    auto self = SELF;
+
+    uint16_t frameRate;
+
+    auto ret = self->cameraDevice->getFrameRate(frameRate);
+    if (ret != royale::CameraStatus::SUCCESS) {
+        ThrowRoyaleException("Failed to get frame rate", (int) ret)
+        return -1;
+    }
+
+    return (jint) frameRate;
+}
+
+JNIEXPORT jint JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_getMaxFrameRate(
+        JNIEnv *env, jobject instance
+) {
+    auto self = SELF;
+
+    uint16_t frameRate;
+
+    auto ret = self->cameraDevice->getMaxFrameRate(frameRate);
+    if (ret != royale::CameraStatus::SUCCESS) {
+        ThrowRoyaleException("Failed to get max frame rate", (int) ret)
+        return -1;
+    }
+
+    return (jint) frameRate;
+}
+
 JNIEXPORT jintArray JNICALL Java_com_example_picoflexxtest_royale_RoyaleCameraDevice_getExposureLimits(
         JNIEnv *env, jobject instance
 ) {

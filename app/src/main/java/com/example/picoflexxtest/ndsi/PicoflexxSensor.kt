@@ -30,8 +30,9 @@ class PicoflexxSensor(
         private val sharedScheduler = Executors.newSingleThreadScheduledExecutor()
         private val TAG = PicoflexxSensor::class.java.simpleName
         private const val CONTROL_USE_CASE = "usecase"
-        private const val CONTROL_AUTO_EXPOSURE = "autoexposure"
-        private const val CONTROL_EXPOSURE_TIME = "exposuretime"
+        private const val CONTROL_AUTO_EXPOSURE = "auto_exposure"
+        private const val CONTROL_EXPOSURE_TIME = "exposure_time"
+        private const val CONTROL_FRAME_RATE = "frame_rate"
     }
 
     private var futureExposure: ScheduledFuture<*>? = null
@@ -65,6 +66,12 @@ class PicoflexxSensor(
     private var maxExposure by registerControl(
         null, null, null, 2000, updateKey = CONTROL_EXPOSURE_TIME
     )
+    private var frameRate by registerControl(
+        CONTROL_FRAME_RATE, ::getFrameRateControl, null, 2
+    )
+    private var maxFrameRate by registerControl(
+        null, null, null, 2, updateKey = CONTROL_FRAME_RATE
+    )
     private var currentUseCase by registerControl(
         CONTROL_USE_CASE,
         ::getUsecaseControl,
@@ -95,6 +102,8 @@ class PicoflexxSensor(
         camera.addExposureTimeCallback {
             this.currentExposure = it[1]
         }
+
+        this.updateControlState()
     }
 
     override fun ping(): Boolean {
@@ -122,6 +131,8 @@ class PicoflexxSensor(
         this.currentUseCase = this.useCases.indexOf(this.camera.getCurrentUseCase())
         this.autoExposure = this.camera.getExposureMode()
         val limits = this.camera.getExposureLimits()
+        this.frameRate = this.camera.getFrameRate()
+        this.maxFrameRate = this.camera.getMaxFrameRate()
         this.minExposure = limits[0]
         this.maxExposure = limits[1]
     }
@@ -153,6 +164,18 @@ class PicoflexxSensor(
             dtype = "bool",
             def = true,
             caption = "Auto exposure"
+        )
+    }
+
+    protected fun getFrameRateControl(): ControlChanges {
+        return ControlChanges(
+            value = this.frameRate,
+            min = 1,
+            max = this.maxFrameRate,
+            def = this.maxFrameRate,
+            readonly = true,
+            dtype = "integer",
+            caption = "Frame rate"
         )
     }
 
