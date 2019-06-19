@@ -12,8 +12,6 @@ import zmq.Msg
 import zmq.msg.MsgAllocator
 import java.nio.ByteBuffer
 import kotlin.reflect.KClass
-import kotlin.reflect.KFunction0
-import kotlin.reflect.KFunction1
 import kotlin.reflect.KProperty
 
 
@@ -89,7 +87,14 @@ abstract class NdsiSensor(
             val command = mapper.readValue<SensorCommand>(it[1])
             when (command.action) {
                 "refresh_controls" -> refreshControls()
-                "set_control_value" -> setControlValue(command.controlId!!, command.value!!)
+                "set_control_value" -> when (command.value) {
+                    is Int -> setControlValue(command.controlId!!, command.value)
+                    is Long -> setControlValue(command.controlId!!, command.value)
+                    is Boolean -> setControlValue(command.controlId!!, command.value)
+                    is String -> setControlValue(command.controlId!!, command.value)
+                    null -> Log.w(TAG, "Unexpected null value in $command")
+                    else -> Log.w(TAG, "Unknown value type ${command.value.javaClass.name}")
+                }
                 else -> Log.w(TAG, "Unknown command on cmd socket: $command")
             }
         }
@@ -140,14 +145,23 @@ abstract class NdsiSensor(
         TODO("Implement resetControlValue")
     }
 
-    fun setControlValue(controlId: String, value: Any) {
+    fun <T : Any> setControlValue(controlId: String, value: T) {
         val control = this.controls[controlId]
         if (control == null) {
             Log.w(TAG, "Tried to set value on unknown control! control=$controlId value=$value")
             return
         }
 
-        control.setter!!.call(value)
+        assert(control.type.java.isAssignableFrom(value::class.java))
+        @Suppress("UNCHECKED_CAST")
+        val typedControl = control as ControlInfo<T>
+
+        if (typedControl.setter == null) {
+            Log.w(TAG, "Control ${control.controlId} uk=${control.updateKey} unexpectedly had a null setter")
+            return
+        }
+
+        typedControl.setter.invoke(typedControl, value)
         this.sendControlState(control)
     }
 
@@ -160,7 +174,7 @@ abstract class NdsiSensor(
         this.dataUrl
     )
 
-    protected fun sendControlState(control: ControlInfo<*>) {
+    protected fun <T : Any> sendControlState(control: ControlInfo<T>) {
         note.sendMultiPart(
             this.sensorUuid.toByteArray(),
             mapper.writeValueAsBytes(
@@ -168,7 +182,7 @@ abstract class NdsiSensor(
                     subject = "update",
                     controlId = control.controlId!!,
                     seq = this.noteSequence,
-                    changes = control.getter!!()
+                    changes = control.getter!!(control)
                 )
             )
         )
@@ -189,8 +203,8 @@ abstract class NdsiSensor(
 
     protected inline fun <reified T : Any> registerControl(
         controlId: String?,
-        getter: KFunction0<ControlChanges>?,
-        setter: KFunction1<T, Unit>?,
+        noinline getter: (ControlInfo<T>.() -> ControlChanges)?,
+        noinline setter: (ControlInfo<T>.(T) -> Unit)?,
         value: T,
         updateKey: Any? = null
     ) = ControlInfo(
@@ -205,8 +219,8 @@ abstract class NdsiSensor(
     inner class ControlInfo<T : Any>(
         val controlId: String?,
         val type: KClass<T>,
-        val getter: KFunction0<ControlChanges>?,
-        val setter: KFunction1<T, Unit>?,
+        val getter: (ControlInfo<T>.() -> ControlChanges)?,
+        val setter: (ControlInfo<T>.(T) -> Unit)?,
         var value: T,
         updateKey: Any? = null
     ) {
