@@ -24,6 +24,7 @@ class PicoflexxSensor(
 ) : NdsiSensor(
     "royale_full",
     UUID.nameUUIDFromBytes(camera.getCameraId().toByteArray()).toString(),
+    "${camera.getCameraName()} - ${camera.getCameraId()}",
     manager
 ) {
     companion object {

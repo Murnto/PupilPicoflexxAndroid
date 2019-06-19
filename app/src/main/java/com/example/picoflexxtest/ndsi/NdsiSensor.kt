@@ -20,6 +20,7 @@ import kotlin.reflect.KProperty
 abstract class NdsiSensor(
     val sensorType: String,
     val sensorUuid: String,
+    val sensorName: String,
     protected val manager: NdsiManager
 ) {
     private val TAG = NdsiSensor::class.java.simpleName
@@ -151,7 +152,7 @@ abstract class NdsiSensor(
     }
 
     open fun sensorAttachJson() = SensorAttach(
-        "sensorName",
+        this.sensorName,
         this.sensorUuid,
         this.sensorType,
         this.noteUrl,
