@@ -34,6 +34,8 @@ class PicoflexxSensor(
         private const val CONTROL_AUTO_EXPOSURE = "b1__auto_exposure"
         private const val CONTROL_EXPOSURE_TIME = "b2__exposure_time"
         private const val CONTROL_FRAME_RATE = "frame_rate"
+        private const val CONTROL_FORMAT_FLAGS = "format_flags"
+        private const val CONTROL_FLAG_COMPRESSED_ZSTD = "flag_compressed_zstd"
     }
 
     private var futureExposure: ScheduledFuture<*>? = null
@@ -103,6 +105,17 @@ class PicoflexxSensor(
             this.camera.setUseCase(this.useCases[it])
             this.updateControlState()
         }
+    )
+    private var formatFlags by registerIntControl(
+        CONTROL_FRAME_RATE, "Format flags", FLAG_ALL or FLAG_COMPRESSED_ZSTD,
+        getter = {
+            it.readonly = true
+        }
+    )
+    private var controlFlagCompressZstd by registerFlagControl(
+        CONTROL_FLAG_COMPRESSED_ZSTD,
+        "Send compressed (Zstd)",
+        FLAG_COMPRESSED_ZSTD
     )
     val lastCompressionData = LastCompressionInfo(0, 0, 0)
     val queueSize get() = this.dataQueue.size
@@ -178,6 +191,7 @@ class PicoflexxSensor(
 
     override fun publishFrame() {
         val data = dataQueue.poll(200, TimeUnit.MILLISECONDS)
+        val flags = this.formatFlags
 
         if (data == null) {
             Log.w(TAG, "$this: Timed out waiting for data")
@@ -186,7 +200,11 @@ class PicoflexxSensor(
 
         lateinit var compressed: ByteArray
         val compressTime = measureNanoTime {
-            compressed = Zstd.compress(data.encoded, 1)
+            compressed = if (flags and FLAG_COMPRESSED_ZSTD != 0) {
+                Zstd.compress(data.encoded, 1)
+            } else {
+                data.encoded
+            }
         }
         this.lastCompressionData.apply {
             compressedSize = compressed.size
@@ -195,7 +213,7 @@ class PicoflexxSensor(
         }
 
         this.sendFrame(
-            FLAG_ALL,
+            flags,
             data.timestamp / 1000.0,
             this.currentExposure,
             compressed
@@ -207,4 +225,28 @@ class PicoflexxSensor(
 
         this.camera.close()
     }
+
+    private fun registerFlagControl(
+        controlId: String,
+        caption: String,
+        flagMask: Int
+    ) = registerControl(
+        controlId,
+        {
+            ControlChanges(
+                value = (this@PicoflexxSensor.formatFlags and flagMask) == flagMask,
+                dtype = "bool",
+                caption = caption
+            )
+        },
+        {
+            if (value) {
+                this@PicoflexxSensor.formatFlags = this@PicoflexxSensor.formatFlags or flagMask
+            } else {
+                this@PicoflexxSensor.formatFlags = this@PicoflexxSensor.formatFlags and flagMask.inv()
+            }
+        },
+        (this.formatFlags and flagMask) == flagMask,
+        updateKey = CONTROL_FORMAT_FLAGS
+    )
 }
