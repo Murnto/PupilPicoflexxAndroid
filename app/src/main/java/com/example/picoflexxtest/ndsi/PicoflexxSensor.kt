@@ -47,17 +47,35 @@ class PicoflexxSensor(
     // We register controls with the registerControl delegate. Upon updating
     // any of the control's values, the control will be flagged as dirty and
     // will be updated next cycle in NdsiManager.
-    private var currentExposure by registerControl(
-        CONTROL_EXPOSURE_TIME,
-        ::getExposureTimeControl,
-        ::setExposureTimeControl,
-        0
+    private var currentExposure by registerIntControl(
+        CONTROL_EXPOSURE_TIME, "Exposure time", 0,
+        getter = {
+            it.min = this.minExposure
+            it.max = this.maxExposure
+            it.readonly = this.autoExposure
+            it.def = this.maxExposure
+        },
+        setter = {
+            val futureExposure = this.futureExposure
+            if (futureExposure != null) {
+                futureExposure.cancel(false)
+                this.futureExposure = null
+            }
+            this.futureExposure = sharedScheduler.schedule({
+                this.camera.setExposureTime(it.toLong())
+            }, 200, TimeUnit.MILLISECONDS)
+        }
     )
-    private var autoExposure by registerControl(
-        CONTROL_AUTO_EXPOSURE,
-        ::getAutoExposureControl,
-        ::setAutoExposureControl,
-        true
+    private var autoExposure by registerBooleanControl(
+        CONTROL_AUTO_EXPOSURE, "Auto exposure",
+        setter = {
+            this.camera.setExposureMode(it)
+
+            // Label exposure control as dirty to ensure the read only status is
+            // correctly updated
+            this.changedControls.add(CONTROL_EXPOSURE_TIME)
+            this.updateControlState()
+        }
     )
     // Pseudo-control to trigger the exposure control to be updated
     private var minExposure by registerControl(
@@ -67,17 +85,24 @@ class PicoflexxSensor(
     private var maxExposure by registerControl(
         null, null, null, 2000, updateKey = CONTROL_EXPOSURE_TIME
     )
-    private var frameRate by registerControl(
-        CONTROL_FRAME_RATE, ::getFrameRateControl, null, 2
+    private var frameRate by registerIntControl(
+        CONTROL_FRAME_RATE, "Frame rate", 2, 1,
+        getter = {
+            it.min = 1
+            it.max = this.maxFrameRate
+            it.def = this.maxFrameRate
+            it.readonly = true
+        }
     )
     private var maxFrameRate by registerControl(
         null, null, null, 2, updateKey = CONTROL_FRAME_RATE
     )
-    private var currentUseCase by registerControl(
-        CONTROL_USE_CASE,
-        ::getUsecaseControl,
-        ::setUsecaseControl,
-        0
+    private var currentUseCase by registerStringMapControl(
+        CONTROL_USE_CASE, "Use case", 0, this.useCases,
+        setter = {
+            this.camera.setUseCase(this.useCases[it])
+            this.updateControlState()
+        }
     )
     val lastCompressionData = LastCompressionInfo(0, 0, 0)
     val queueSize get() = this.dataQueue.size
@@ -136,72 +161,6 @@ class PicoflexxSensor(
         this.maxFrameRate = this.camera.getMaxFrameRate()
         this.minExposure = limits[0]
         this.maxExposure = limits[1]
-    }
-
-    protected fun getUsecaseControl(): ControlChanges {
-        return ControlChanges(
-            value = this.useCases.indexOf(this.camera.getCurrentUseCase()),
-            def = 0,
-            caption = "Use Case",
-            map = this.useCases.mapIndexed { idx, uc ->
-                ControlEnumOptions(idx, uc)
-            }
-        )
-    }
-
-    protected fun setUsecaseControl(value: Int) {
-        if (value < 0 || value >= this.useCases.size) {
-            Log.w(TAG, "Attempted to set an invalid index '$value'")
-            return
-        }
-
-        this.camera.setUseCase(this.useCases[value])
-        this.updateControlState()
-    }
-
-    protected fun getAutoExposureControl(): ControlChanges {
-        return ControlChanges(
-            value = this.camera.getExposureMode(),
-            dtype = "bool",
-            def = true,
-            caption = "Auto exposure"
-        )
-    }
-
-    protected fun getFrameRateControl(): ControlChanges {
-        return ControlChanges(
-            value = this.frameRate,
-            min = 1,
-            max = this.maxFrameRate,
-            def = this.maxFrameRate,
-            readonly = true,
-            dtype = "integer",
-            caption = "Frame rate"
-        )
-    }
-
-    protected fun setAutoExposureControl(value: Boolean) {
-        this.camera.setExposureMode(value)
-
-        this.sendControlState(this.controls[CONTROL_EXPOSURE_TIME]!!)
-        this.updateControlState()
-
-        // Label exposure control as dirty to ensure the read only status is
-        // correctly updated
-        this.changedControls.add(CONTROL_EXPOSURE_TIME)
-    }
-
-    protected fun getExposureTimeControl(): ControlChanges {
-        return ControlChanges(
-            value = this.currentExposure,
-            readonly = this.autoExposure,
-            min = this.minExposure,
-            max = this.maxExposure,
-            def = this.maxExposure,
-            res = 1,
-            dtype = "integer",
-            caption = "Exposure time"
-        )
     }
 
     protected fun setExposureTimeControl(value: Int) {

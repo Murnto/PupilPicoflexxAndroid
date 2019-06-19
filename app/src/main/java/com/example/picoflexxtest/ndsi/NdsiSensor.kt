@@ -201,6 +201,76 @@ abstract class NdsiSensor(
         }
     }
 
+    protected fun registerStringMapControl(
+        controlId: String, caption: String, default: Int,
+        values: List<String>,
+        setter: (Int) -> Unit
+    ) = registerControl(
+        controlId,
+        getter = {
+            ControlChanges(
+                value = this.value,
+                def = default,
+                caption = caption,
+                map = values.mapIndexed { idx, uc ->
+                    ControlEnumOptions(idx, uc)
+                }
+            )
+        },
+        setter = { newValue ->
+            if (newValue < 0 || newValue >= values.size) {
+                Log.w(TAG, "Attempted to set an invalid index '$newValue' on control $controlId")
+                return@registerControl
+            }
+
+            setter(newValue)
+        },
+        value = default
+    )
+
+    protected fun registerIntControl(
+        controlId: String, caption: String, default: Int, min: Int = 0, max: Int = 0, res: Int = 1,
+        getter: ((ControlChanges) -> Unit)? = null,
+        setter: ((Int) -> Unit)? = null
+    ) = registerControl(
+        controlId,
+        getter = {
+            return@registerControl ControlChanges(
+                value = this.value,
+                min = min,
+                max = max,
+                res = res,
+                def = default,
+                dtype = "integer",
+                caption = caption
+            ).also {
+                getter?.invoke(it)
+            }
+        },
+        setter = { setter?.invoke(it) },
+        value = default
+    )
+
+    protected fun registerBooleanControl(
+        controlId: String, caption: String, default: Boolean = false,
+        getter: ((ControlChanges) -> Unit)? = null,
+        setter: (Boolean) -> Unit
+    ) = registerControl(
+        controlId,
+        getter = {
+            return@registerControl ControlChanges(
+                value = this.value,
+                def = default,
+                dtype = "bool",
+                caption = caption
+            ).also {
+                getter?.invoke(it)
+            }
+        },
+        setter = { setter(it) },
+        value = default
+    )
+
     protected inline fun <reified T : Any> registerControl(
         controlId: String?,
         noinline getter: (ControlInfo<T>.() -> ControlChanges)?,
