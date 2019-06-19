@@ -176,17 +176,6 @@ class PicoflexxSensor(
         this.maxExposure = limits[1]
     }
 
-    protected fun setExposureTimeControl(value: Int) {
-        val futureExposure = this.futureExposure
-        if (futureExposure != null) {
-            futureExposure.cancel(false)
-            this.futureExposure = null
-        }
-        this.futureExposure = sharedScheduler.schedule({
-            this.camera.setExposureTime(value.toLong())
-        }, 200, TimeUnit.MILLISECONDS)
-    }
-
     override fun hasFrame() = !this.dataQueue.isEmpty()
 
     override fun publishFrame() {
