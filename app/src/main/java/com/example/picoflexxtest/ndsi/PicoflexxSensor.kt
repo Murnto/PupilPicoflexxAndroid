@@ -30,9 +30,9 @@ class PicoflexxSensor(
     companion object {
         private val sharedScheduler = Executors.newSingleThreadScheduledExecutor()
         private val TAG = PicoflexxSensor::class.java.simpleName
-        private const val CONTROL_USE_CASE = "usecase"
-        private const val CONTROL_AUTO_EXPOSURE = "auto_exposure"
-        private const val CONTROL_EXPOSURE_TIME = "exposure_time"
+        private const val CONTROL_USE_CASE = "a__usecase"
+        private const val CONTROL_AUTO_EXPOSURE = "b1__auto_exposure"
+        private const val CONTROL_EXPOSURE_TIME = "b2__exposure_time"
         private const val CONTROL_FRAME_RATE = "frame_rate"
     }
 
