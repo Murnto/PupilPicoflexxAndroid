@@ -55,6 +55,15 @@ class NdsiManager {
         this.network.setVerbose()
     }
 
+    fun getAdjustedTime(time: Long) =
+        this.timeSync.currentOffset + time / 1000.0
+
+    fun getAdjustedTime(time: Double) =
+        this.timeSync.currentOffset + time
+
+    fun getAdjustedTime() =
+        this.timeSync.getTime()
+
     fun start() {
         Thread {
             startServiceLoop()

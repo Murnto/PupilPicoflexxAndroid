@@ -203,7 +203,7 @@ class PicoflexxSensor(
 
         this.sendFrame(
             flags,
-            data.timestamp / 1000.0,
+            this.manager.getAdjustedTime(data.timestamp),
             this.currentExposure,
             compressed
         )
