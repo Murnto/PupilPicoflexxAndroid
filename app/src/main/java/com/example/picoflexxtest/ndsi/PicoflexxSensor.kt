@@ -62,6 +62,9 @@ class PicoflexxSensor(
             it.def = this.maxExposure
         },
         setter = {
+            // We wrap the actual setting of the exposure in a scheduled future
+            // so we can essentially rate limit how often it's changed. As it's
+            // opaque as to when the previous operation actually completes.
             val futureExposure = this.futureExposure
             if (futureExposure != null) {
                 futureExposure.cancel(false)
