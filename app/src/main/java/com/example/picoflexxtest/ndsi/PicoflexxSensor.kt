@@ -35,6 +35,10 @@ class PicoflexxSensor(
         private const val CONTROL_EXPOSURE_TIME = "b2__exposure_time"
         private const val CONTROL_FRAME_RATE = "frame_rate"
         private const val CONTROL_FORMAT_FLAGS = "format_flags"
+        private const val CONTROL_FLAG_IR = "flag_ir"
+        private const val CONTROL_FLAG_POINTCLOUD = "flag_pointcloud"
+        private const val CONTROL_FLAG_NOISE = "flag_noise"
+        private const val CONTROL_FLAG_CONFIDENCE = "flag_confidence"
         private const val CONTROL_FLAG_COMPRESSED_ZSTD = "flag_compressed_zstd"
     }
 
@@ -111,6 +115,18 @@ class PicoflexxSensor(
         getter = {
             it.readonly = true
         }
+    )
+    private var controlFlagIr by registerFlagControl(CONTROL_FLAG_IR, "Send ir", FLAG_IR)
+    private var controlFlagPointcloud by registerFlagControl(
+        CONTROL_FLAG_POINTCLOUD,
+        "Send point cloud",
+        FLAG_POINTCLOUD
+    )
+    private var controlFlagNoise by registerFlagControl(CONTROL_FLAG_NOISE, "Send noise", FLAG_NOISE)
+    private var controlFlagConfidence by registerFlagControl(
+        CONTROL_FLAG_CONFIDENCE,
+        "Send confidence",
+        FLAG_CONFIDENCE
     )
     private var controlFlagCompressZstd by registerFlagControl(
         CONTROL_FLAG_COMPRESSED_ZSTD,
