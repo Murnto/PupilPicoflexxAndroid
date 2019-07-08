@@ -78,6 +78,8 @@ dependencies {
 //    implementation "org.zeromq:jzmq-devices:3.1.1-SNAPSHOT"
 //    implementation "org.zeromq:jzmq-jni:3.1.1-SNAPSHOT"
 
+    implementation 'com.jaredrummler:android-device-names:1.0.9'
+
     implementation "org.jetbrains.anko:anko-commons:0.10.8"
 
     // https://mvnrepository.com/artifact/com.github.luben/zstd-jni

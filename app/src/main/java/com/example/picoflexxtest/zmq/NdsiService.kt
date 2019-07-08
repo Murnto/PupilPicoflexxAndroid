@@ -22,8 +22,10 @@ import com.example.picoflexxtest.R
 import com.example.picoflexxtest.connectivityManager
 import com.example.picoflexxtest.ndsi.PicoflexxSensor
 import com.example.picoflexxtest.royale.RoyaleCameraDevice
+import com.jaredrummler.android.device.DeviceName
 import java.net.Inet4Address
 import java.util.concurrent.atomic.AtomicBoolean
+
 
 class NdsiService : Service() {
     private val binder = TestBindServiceBinder()
@@ -31,6 +33,7 @@ class NdsiService : Service() {
     private lateinit var manager: NdsiManager
     private var detachReceiver: BroadcastReceiver? = null
     private val initializingDevice = AtomicBoolean(false)
+    private var deviceName: String = "Unknown Device"
     val sensors get() = manager.sensors
 
     inner class TestBindServiceBinder : Binder() {
@@ -94,12 +97,19 @@ class NdsiService : Service() {
             return START_STICKY
         }
 
-        this.manager = NdsiManager()
-        this.manager.start()
+        DeviceName.with(this).request { info, error ->
+            if (info != null && info.name != null) {
+                this.deviceName = info.name
+            }
+            error?.printStackTrace()
 
-        this.registerDetachReceiver()
-        this.registerWifiStateReceiver()
-        this.attemptConnectPicoflexx()
+            this.manager = NdsiManager(this.deviceName)
+            this.manager.start()
+
+            this.registerDetachReceiver()
+            this.registerWifiStateReceiver()
+            this.attemptConnectPicoflexx()
+        }
 
         return START_STICKY
     }

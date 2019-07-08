@@ -27,7 +27,9 @@ val mapper = jacksonObjectMapper().also {
     it.setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
 }
 
-class NdsiManager {
+class NdsiManager(
+    private val hostname: String
+) {
     private var network: Zyre
     private lateinit var timeSync: TimeSync
     private val TAG = NdsiManager::class.java.simpleName
@@ -46,7 +48,6 @@ class NdsiManager {
                 field = value
             }
         }
-    private val hostname = "test-hostname"
 
     init {
         ZmqUtils.nativeZyreHack()
