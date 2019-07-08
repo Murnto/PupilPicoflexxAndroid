@@ -22,6 +22,11 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
+        <activity
+            android:name=".TestActivity"
+            android:label="@string/title_activity_test"
+            android:exported="true"
+            android:theme="@style/AppTheme.NoActionBar" />
         <service
             android:name=".zmq.NdsiService"
             android:enabled="true"
