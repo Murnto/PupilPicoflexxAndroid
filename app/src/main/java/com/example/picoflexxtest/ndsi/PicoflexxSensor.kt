@@ -248,7 +248,8 @@ class PicoflexxSensor(
             )
         },
         {
-            if (value) {
+            Log.i(TAG, "$flagMask | $caption = $it")
+            if (it) {
                 this@PicoflexxSensor.formatFlags = this@PicoflexxSensor.formatFlags or flagMask
             } else {
                 this@PicoflexxSensor.formatFlags = this@PicoflexxSensor.formatFlags and flagMask.inv()
