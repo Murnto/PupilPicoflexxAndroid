@@ -114,7 +114,7 @@ class PicoflexxSensor(
         }
     )
     private var formatFlags by registerIntControl(
-        CONTROL_FRAME_RATE, "Format flags", FLAG_ALL or FLAG_COMPRESSED_ZSTD,
+        CONTROL_FRAME_RATE, "Format flags", FLAG_ALL,
         getter = {
             it.readonly = true
         }
