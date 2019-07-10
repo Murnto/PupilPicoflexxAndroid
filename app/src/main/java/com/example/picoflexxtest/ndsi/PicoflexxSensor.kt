@@ -136,7 +136,7 @@ class PicoflexxSensor(
         "Send compressed (Zstd)",
         FLAG_COMPRESSED_ZSTD
     )
-    val lastCompressionData = LastCompressionInfo(0, 0, 0)
+    val lastCompressionData = LastCompressionInfo(0, 0, 0, this.sensorName)
     val queueSize get() = this.dataQueue.size
 
     init {

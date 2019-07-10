@@ -118,6 +118,7 @@ class MainActivity : AppCompatActivity() {
                 Last frame: ${compression.compressedSize}/${compression.uncompressedSize}
                     Compression ratio: ${compression.ratio}
                     Time taken: ${compression.timeMicros}μs
+                Name: ${compression.name}
             """.trimIndent()
         }
 

@@ -3,7 +3,8 @@ package com.example.picoflexxtest.ndsi.picoflexx
 data class LastCompressionInfo(
     var compressedSize: Int,
     var uncompressedSize: Int,
-    var timeMicros: Long
+    var timeMicros: Long,
+    val name: String
 ) {
     val ratio
         get() = if (this.uncompressedSize == 0) {
